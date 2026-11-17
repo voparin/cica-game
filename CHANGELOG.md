@@ -2,6 +2,16 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.5.2 – 2026-11-17
+
+- Az ajtók a fal síkjában fekszenek (izometrikus `doorQuad`), nem állnak ki
+  billboardként.
+- A tetők nem üresek: gerinc, cserépsorok és élek rajzolódnak a tetőlapokra
+  (nyereg/sátor/lapos). A `shade` most világosítani is tud (0..255 közé vágva).
+- Az állatok fajuknak megfelelően és eltérő fázissal mozognak: a macskák lassan,
+  kis körzetben, meg-megállva; a kutyák fürgébben, nagyobb körben; a seedből vett
+  fáziseltolás miatt már nem mozog mindegyik egyszerre.
+
 ## 0.5.1 – 2026-11-17
 
 - Házrajz-javítás: a házak mostantól a **kamera felőli** (elülső) falakkal
