@@ -2,6 +2,17 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.4.0 – 2026-11-17
+
+- Hatféle háztípus a seedből (ADR-0010): lakóház, gyár, iskola, iroda, bolt,
+  étterem; mindegyiknek ajtaja. A speciális típusok kis táblát kapnak az ajtó
+  fölött (GY/IS/IR/BOLT/ÉT), így kívülről is megkülönböztethetők.
+- A lakóház belseje berendezett (felirat nélkül): bal oldalon ágy, középen
+  szőnyeg, jobb oldalon szekrény; a szekrény tetején 3 könyv + egy társas, alatta
+  a padlón egy könyv, 3 színes ceruza és egy maci.
+- A másik öt típus belseje egyszerű szoba, középen a típus nevével.
+- Az ütközés, a fizika és a hálózat változatlan.
+
 ## 0.3.2 – 2026-11-17
 
 - 2× szélesebb úttest (`ROAD_HALF`).

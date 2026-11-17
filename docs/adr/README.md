@@ -14,3 +14,4 @@ Itt van naplózva minden architekturális döntés: mit, miért és milyen alter
 | [0007](0007-y-rendezett-takaras.md) | Y-rendezett (mélység szerinti) rajzolás a takaráshoz | Elfogadva | 2026-11-17 |
 | [0008](0008-hazak-vizualis-valtozatossaga.md) | Házak vizuális változatossága a seedből | Elfogadva | 2026-11-17 |
 | [0009](0009-mozgatott-jarmuvek-tartos-helye.md) | Mozgatott járművek tartós helye (localStorage) | Elfogadva | 2026-11-17 |
+| [0010](0010-haztipusok-es-berendezett-lakoszoba.md) | Háztípusok és berendezett lakószoba | Elfogadva | 2026-11-17 |

@@ -44,6 +44,9 @@ követi.
   megjelenő dolgot a `buildDrawList`-be is vegyél fel, hogy helyesen takarjon.**
 - Házak: `drawHouse` (oldalfalak + tető a `roofType` szerint), színek/magasság a
   seedből (`HOUSE_WALLS`/`HOUSE_ROOFS`/`ROOF_TYPES`); utcák: `drawStreets`.
+- Háztípusok (ADR-0010): `houseType(seed)` (lakóház/gyár/iskola/iroda/bolt/étterem),
+  a speciálisok jele `houseSign` szerint az ajtó fölött; a belső `roomFor(type)` –
+  a lakóház berendezett (`drawBedroom`, felirat nélkül), a többi a típus nevével.
 - Szereplők: `drawPerson` / `drawCarSprite` / `drawHorseSprite` (árnyékkal).
 
 ## Tesztek
