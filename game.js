@@ -13,7 +13,7 @@ resize();
 // ===== Világ (végtelen, determinisztikus generálás) – ADR-0003 =====
 // Minden a pozícióból számolódik: nincs világbejárás, mindig csak a kamera körüli cellák.
 const ROAD_SPACING = 600;        // az utak (rácsvonalak) távolsága px-ben
-const ROAD_HALF = 26;            // az úttest fél-szélessége (az útvonaltól mérve)
+const ROAD_HALF = 52;            // az úttest fél-szélessége (az útvonaltól mérve) – 2× szélesebb út
 
 // pozíció-alapú egész hash → 0..2^32-1, determinisztikus (ugyanaz a bemenet → ugyanaz a kimenet)
 function hash32(ix, iy) {

@@ -48,6 +48,7 @@ check('a game.js lefut és közzéteszi a felületét (G)', !!G && !!G.player &&
 check('a hash determinisztikus és stabil', G.hash32(3, 7) === G.hash32(3, 7) && G.hash32(3, 7) !== G.hash32(7, 3));
 check('ROAD_SPACING rácsán az út felismerhető', G.onRoad(0, 0) === true && G.onRoad(G.ROAD_SPACING, 0) === true);
 check('a háztömb közepén nincs út', G.onRoad(G.ROAD_SPACING / 2, G.ROAD_SPACING / 2) === false);
+check('az úttest kétszer szélesebb (ROAD_HALF >= 50), de nem lóg a házakra', G.ROAD_HALF >= 50 && G.ROAD_HALF < G.HOUSE_MARGIN);
 check('nearestRoad a legközelebbi rácsvonalra tesz', (() => { const r = G.nearestRoad(G.ROAD_SPACING / 2 + 5, 123); return Math.abs(r.x - G.ROAD_SPACING) < 1e-6; })());
 
 // --- Izometrikus vetítés ---
