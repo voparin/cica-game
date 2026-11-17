@@ -66,6 +66,7 @@ check('collideHouses a házba lépő pontot kitolja', (() => {
   G.collideHouses(p, 0);
   return Math.abs(p.x - h.x) > 0 || Math.abs(p.y - h.y) > 0;
 })());
+check('a drawCity függvény létezik', typeof G.drawCity === 'function');
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 

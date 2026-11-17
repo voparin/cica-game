@@ -112,15 +112,20 @@ function updatePlayer(dt) {
 // ===== Rajzolás =====
 function worldToScreen(x, y) { return [x - player.x + W / 2, y - player.y + H / 2]; }
 
-function drawGrid() {                                 // egyszerű rács, hogy a mozgás látszódjon
-  const S = 80;
-  ctx.strokeStyle = '#1b2838';
-  ctx.lineWidth = 1;
-  const ox = ((W / 2 - player.x) % S + S) % S, oy = ((H / 2 - player.y) % S + S) % S;
-  ctx.beginPath();
-  for (let x = ox; x < W; x += S) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
-  for (let y = oy; y < H; y += S) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
-  ctx.stroke();
+function drawCity() {
+  // háttér már kész (draw() tölti); most az utak
+  const left = player.x - W / 2, top = player.y - H / 2;
+  ctx.fillStyle = '#394a5a';
+  const g0x = Math.floor((left) / ROAD_SPACING) - 1, g1x = Math.floor((left + W) / ROAD_SPACING) + 1;
+  const g0y = Math.floor((top) / ROAD_SPACING) - 1, g1y = Math.floor((top + H) / ROAD_SPACING) + 1;
+  for (let gx = g0x; gx <= g1x; gx++) { const [sx] = worldToScreen(gx * ROAD_SPACING, 0); ctx.fillRect(sx - ROAD_HALF, 0, ROAD_HALF * 2, H); }
+  for (let gy = g0y; gy <= g1y; gy++) { const [, sy] = worldToScreen(0, gy * ROAD_SPACING); ctx.fillRect(0, sy - ROAD_HALF, W, ROAD_HALF * 2); }
+  // házak
+  for (const h of housesIn(player.x, player.y, Math.hypot(W, H) / 2 + ROAD_SPACING)) {
+    const [sx, sy] = worldToScreen(h.x, h.y);
+    ctx.fillStyle = '#6b5641'; ctx.fillRect(sx - h.w / 2, sy - h.h / 2, h.w, h.h);
+    ctx.fillStyle = '#caa36f'; const [dx, dy] = worldToScreen(h.door.x, h.door.y); ctx.fillRect(dx - 6, dy - 6, 12, 12);   // ajtó
+  }
 }
 
 function drawPlayer(x, y, a, color, name) {
@@ -144,7 +149,7 @@ function drawPlayer(x, y, a, color, name) {
 function draw() {
   ctx.fillStyle = '#0d1b2a';
   ctx.fillRect(0, 0, W, H);
-  drawGrid();
+  drawCity();
   for (const o of net.others.values()) drawPlayer(o.x, o.y, o.a, o.color || '#d42020', o.name);
   drawPlayer(player.x, player.y, player.a, player.color, player.name);
   // HUD
@@ -235,5 +240,6 @@ if (typeof global !== 'undefined') {
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     pushOutOfRect, collideHouses,
+    drawCity,
     get W() { return W; }, get H() { return H; } };
 }
