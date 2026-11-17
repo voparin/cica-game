@@ -100,6 +100,27 @@ function collideHouses(p, pad) {
 
 // Elérhető (parkoló) járművek az útkereszteződések közelében, determinisztikusan.
 // Nincs AI-forgalom; ezek csak be-/felszállható járművek (ADR-0004).
+// Kivétel a determinisztikus világ alól (ADR-0009): a mozgatott járművek az új helyükön
+// maradnak, és localStorage-ba mentődnek. A kulcs a jármű formula-ID-je.
+const movedVehicles = new Map();                     // id → { x, y, angle, speed, kind, color }
+const VEH_KEY = 'szofi.vehicles';
+function loadVehicles() {
+  try {
+    const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(VEH_KEY)) || null;
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    for (const id of Object.keys(o)) movedVehicles.set(id, o[id]);
+  } catch (e) { /* hibás/üres mentés – a formula-helyeket használjuk */ }
+}
+function saveVehicles() {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const o = {}; for (const [id, v] of movedVehicles) o[id] = v;
+    localStorage.setItem(VEH_KEY, JSON.stringify(o));
+  } catch (e) { /* a mentés nem kritikus */ }
+}
+function setVehicleMoved(id, v) { movedVehicles.set(id, { x: v.x, y: v.y, angle: v.angle, speed: v.speed || 0, kind: v.kind, color: v.color }); }
+
 function vehiclesInCell(gx, gy) {
   if (rand01(gx, gy, 31) < 0.45) return [];                 // nem minden kereszteződésnél van jármű
   const rx = gx * ROAD_SPACING, ry = gy * ROAD_SPACING;     // a kereszteződés
@@ -108,15 +129,21 @@ function vehiclesInCell(gx, gy) {
   const off = 120 + Math.floor(rand01(gx, gy, 34) * 200);
   const x = along ? rx + off : rx, y = along ? ry : ry + off;
   const a = along ? 0 : Math.PI / 2;
+  const id = 'v_' + gx + '_' + gy;
+  const m = movedVehicles.get(id);                          // ha mozgattuk, az új helyén áll
+  if (m) return [{ x: m.x, y: m.y, a: m.angle, kind: m.kind, speed: m.speed, angle: m.angle, color: m.color, id }];
   return [{ x, y, a, kind, speed: 0, angle: a,
-            color: kind === 'auto' ? '#d42020' : '#8a5a2b', id: 'v_' + gx + '_' + gy }];
+            color: kind === 'auto' ? '#d42020' : '#8a5a2b', id }];
 }
 function vehiclesIn(cx, cy, radius) {
-  const out = [];
+  const out = [], seen = new Set();
+  const add = v => { if (!seen.has(v.id) && Math.hypot(v.x - cx, v.y - cy) <= radius) { seen.add(v.id); out.push(v); } };
   const g0x = Math.floor((cx - radius) / ROAD_SPACING), g1x = Math.floor((cx + radius) / ROAD_SPACING);
   const g0y = Math.floor((cy - radius) / ROAD_SPACING), g1y = Math.floor((cy + radius) / ROAD_SPACING);
   for (let gy = g0y; gy <= g1y; gy++) for (let gx = g0x; gx <= g1x; gx++)
-    for (const v of vehiclesInCell(gx, gy)) if (Math.hypot(v.x - cx, v.y - cy) <= radius) out.push(v);
+    for (const v of vehiclesInCell(gx, gy)) add(v);
+  // a mozgatott járművek más cellába is sodródhattak, mint amiben a formula-ID-jük iterál – ezeket külön is nézzük
+  for (const [id, m] of movedVehicles) if (!seen.has(id)) add({ x: m.x, y: m.y, a: m.angle, kind: m.kind, speed: m.speed, angle: m.angle, color: m.color, id });
   return out;
 }
 
@@ -170,8 +197,10 @@ const ENTER_RANGE = 46;          // ennyin belül lehet be-/felszállni
 function toggleVehicle() {
   if (player.inHouse) return;                             // házban nincs jármű
   if (player.riding) {                                    // kiszállás a jármű mellé
-    player.x = player.riding.x + Math.cos(player.riding.angle + Math.PI / 2) * 24;
-    player.y = player.riding.y + Math.sin(player.riding.angle + Math.PI / 2) * 24;
+    const v = player.riding;
+    setVehicleMoved(v.id, v); saveVehicles();             // a jármű az aktuális helyén marad (mentve)
+    player.x = v.x + Math.cos(v.angle + Math.PI / 2) * 24;
+    player.y = v.y + Math.sin(v.angle + Math.PI / 2) * 24;
     player.riding = null;
     return;
   }
@@ -503,6 +532,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
+loadVehicles();                                       // a korábban mozgatott járművek helye
 netConnect();                                         // többjátékos mód, ha a saját szerverről fut a játék
 
 // a füstteszt számára (kamu böngészőkörnyezetben eval-eljük ezt a fájlt)
@@ -513,6 +543,7 @@ if (typeof global !== 'undefined') {
     HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
+    movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,

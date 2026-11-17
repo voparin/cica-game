@@ -17,11 +17,18 @@ const ctxStub = new Proxy({}, {
 const mkCanvas = () => ({ width: 0, height: 0, getContext: () => ctxStub });
 const listeners = Object.create(null);
 let rafCb = null, now = 0;
+const lsStore = Object.create(null);                 // kamu localStorage a mentés-teszthez
+global.localStorage = {
+  getItem: k => (k in lsStore ? lsStore[k] : null),
+  setItem: (k, v) => { lsStore[k] = String(v); },
+  removeItem: k => { delete lsStore[k]; },
+};
 global.window = {
   innerWidth: 1280, innerHeight: 720,
   addEventListener: (e, f) => (listeners[e] = f),
   location: { hostname: 'localhost', host: 'localhost:8080', protocol: 'http:' },
   WebSocket: undefined,   // a smoke tesztben nincs valódi hálózat; a kapcsolatot a szerverteszt fedi
+  localStorage: global.localStorage,
 };
 global.document = { getElementById: mkCanvas, createElement: mkCanvas };
 global.performance = { now: () => now };
@@ -123,6 +130,20 @@ check('vehiclesIn determinisztikus', (() => {
 check('a járművek az úton vannak, és van köztük ló és autó is', (() => {
   const v = G.vehiclesIn(0, 0, 4000);
   return v.length > 0 && v.every(x => G.onRoad(x.x, x.y)) && v.some(x => x.kind === 'auto') && v.some(x => x.kind === 'lo');
+})());
+
+// --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
+check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {
+  const v0 = G.vehiclesIn(0, 0, 6000)[0];
+  const ox = v0.x, oy = v0.y;
+  G.setVehicleMoved(v0.id, { x: ox + 777, y: oy + 555, angle: 1, speed: 0, kind: v0.kind, color: v0.color });
+  const found = G.vehiclesIn(0, 0, 8000).find(w => w.id === v0.id);
+  return !!found && Math.abs(found.x - (ox + 777)) < 1 && Math.abs(found.y - (oy + 555)) < 1;
+})());
+check('a mozgatott járművek mentődnek és visszaolvashatók (localStorage)', (() => {
+  G.saveVehicles();
+  const raw = global.localStorage.getItem('szofi.vehicles');
+  return typeof raw === 'string' && raw.length > 2;
 })());
 
 // --- Járműfizika (irányított) ---
