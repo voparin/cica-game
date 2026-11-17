@@ -257,6 +257,17 @@ check('bedroomLayout az ágy/szekrény/tárgyak zónáit adja, a szobán belül'
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
   return L.bed && L.wardrobe && Array.isArray(L.items) && L.items.length === 4 && inside(L.bed) && L.items.every(inside) && L.exit && inside(L.exit);
 })());
+check('az ágynál E-re lefekszik; a szekrénynél E-re felvesz; a kijáratnál E-re kilép', (() => {
+  G.player.riding = null; G.player.inHouse = null; G.player.holding = '';
+  const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
+  const L = G.bedroomLayout(G.player.inHouse.rw, G.player.inHouse.rh);
+  G.player.ix = L.bed.x; G.player.iy = L.bed.y; G.onUse(); const inBed = G.player.inBed === true;
+  G.player.inBed = false;                                  // a teszt kézzel kelti fel
+  const maci = L.items.find(i => i.name === 'maci'); G.player.ix = maci.x; G.player.iy = maci.y; G.onUse();
+  const holds = G.player.holding === 'maci';
+  G.player.ix = L.exit.x; G.player.iy = L.exit.y; G.onUse(); const left = !G.player.inHouse;
+  return inBed && holds && left;
+})());
 check('drawBedroom létezik és a lakószoba nem dob hibát', (() => {
   G.player.riding = null; const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
   let ok = true; try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }

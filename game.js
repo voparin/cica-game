@@ -209,7 +209,7 @@ function animalsIn(cx, cy, radius) {                     // a közeli házak ál
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
-const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0 };
+const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0, inBed: false, holding: '', sleepT: 0 };
 const keys = Object.create(null);
 window.addEventListener('keydown', e => {
   if ((e.key === 'e' || e.key === 'E') && !keys._e) { keys._e = true; onUse(); }
@@ -306,9 +306,20 @@ function leaveHouse() {
   player.x = b.x; player.y = b.y + 18;                   // az ajtó elé, kifelé
 }
 function onUse() {
-  if (player.inHouse) {                                  // a kijárat közelében: kilépés
-    const ex = player.inHouse.exit;
-    if (Math.hypot(player.ix - ex.x, player.iy - ex.y) < 40) leaveHouse();
+  if (player.inHouse) {
+    if (player.inBed) return;                            // alvás alatt nincs más
+    const r = player.inHouse, L = bedroomLayout(r.rw, r.rh);
+    const near = (z, d) => Math.hypot(player.ix - z.x, player.iy - z.y) < d;
+    if (r.room && r.room.furnished) {                    // lakószoba: ágy / szekrény / kijárat
+      if (near(L.exit, 40)) { leaveHouse(); return; }
+      if (near(L.bed, 44)) { player.inBed = true; player.sleepT = 0; return; }
+      let best = null, bd = 42;                          // a legközelebbi tárgy a szekrény körül
+      for (const it of L.items) { const d = Math.hypot(player.ix - it.x, player.iy - it.y); if (d < bd) { bd = d; best = it; } }
+      if (best) { player.holding = (player.holding === best.name) ? '' : best.name; return; }
+      if (near(L.exit, 60)) leaveHouse();
+      return;
+    }
+    if (Math.hypot(player.ix - r.exit.x, player.iy - r.exit.y) < 40) leaveHouse();   // nem lakószoba
     return;
   }
   if (player.riding) { toggleVehicle(); return; }        // járműből kiszállás
@@ -320,6 +331,7 @@ function onUse() {
 function updateInterior(dt) {
   if (!player.inHouse) return;
   const r = player.inHouse;
+  if (player.inBed) { player.sleepT += dt; if (player.sleepT > 2.2) player.inBed = false; return; }   // rövid alvás, majd felkel
   let dx = 0, dy = 0;
   if (keys.ArrowLeft) dx -= 1; if (keys.ArrowRight) dx += 1;
   if (keys.ArrowUp) dy -= 1; if (keys.ArrowDown) dy += 1;
