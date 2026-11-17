@@ -49,6 +49,12 @@ check('iso a magasságot (z) felfelé tolja', (() => { const a = G.iso(100, 100,
 check('iso +x és +y ellentétes vízszintes irányba visz (izometria)', (() => { const px = G.iso(100, 0, 0), py = G.iso(0, 100, 0); return Math.sign(px.x) !== Math.sign(py.x) && px.y > 0 && py.y > 0; })());
 check('worldToScreen a játékost a képernyő közepére teszi', (() => { const sx = G.player.x, sy = G.player.y; G.player.x = 500; G.player.y = -300; const s = G.worldToScreen(500, -300); G.player.x = sx; G.player.y = sy; return Math.abs(s[0] - G.W / 2) < 1 && Math.abs(s[1] - G.H / 2) < 1; })());
 
+// --- Bemenet a képernyőhöz forgatva ---
+check('screenToWorldDir(0,0) nulla', (() => { const d = G.screenToWorldDir(0, 0); return d.x === 0 && d.y === 0; })());
+check('a képernyőn „fel" a világban -x,-y felé visz (a kamera felé)', (() => { const d = G.screenToWorldDir(0, -1); return d.x < 0 && d.y < 0; })());
+check('a képernyőn „jobbra" +x,-y felé visz', (() => { const d = G.screenToWorldDir(1, 0); return d.x > 0 && d.y < 0; })());
+check('az irány egységnyi hosszú (normált)', (() => { const d = G.screenToWorldDir(1, 1); return Math.abs(Math.hypot(d.x, d.y) - 1) < 1e-6; })());
+
 // --- Világ: házak ---
 check('housesIn determinisztikus (ugyanaz a terület → ugyanaz a ház)', (() => {
   const a = G.housesIn(0, 0, 1200), b = G.housesIn(0, 0, 1200);

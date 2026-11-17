@@ -127,10 +127,10 @@ function updatePlayer(dt) {
   if (keys.ArrowUp) dy -= 1;
   if (keys.ArrowDown) dy += 1;
   if (dx || dy) {
-    const n = Math.hypot(dx, dy);                    // átló is egységnyi sebesség
-    player.x += (dx / n) * SPEED * dt;
-    player.y += (dy / n) * SPEED * dt;
-    player.a = Math.atan2(dy, dx);
+    const w = screenToWorldDir(dx, dy);              // a nyilak a képernyőhöz igazodnak
+    player.x += w.x * SPEED * dt;
+    player.y += w.y * SPEED * dt;
+    player.a = Math.atan2(w.y, w.x);
   }
   if (!player.inHouse && !player.riding) collideHouses(player, 12);
 }
@@ -240,6 +240,15 @@ function iso(wx, wy, wz = 0) {
 function worldToScreen(x, y, z = 0) {
   const p = iso(x, y, z), c = iso(player.x, player.y, 0);
   return [p.x - c.x + W / 2, p.y - c.y + H / 2];
+}
+// képernyő-irány (dx jobbra, dy lefelé) → normált világ-irány, az izo inverze.
+// iso: sx=(wx-wy)*ISO_X, sy=(wx+wy)*ISO_Y  → wx = sx/(2*ISO_X)+sy/(2*ISO_Y), wy = sy/(2*ISO_Y)-sx/(2*ISO_X)
+function screenToWorldDir(dx, dy) {
+  if (dx === 0 && dy === 0) return { x: 0, y: 0 };
+  const wx = dx / (2 * ISO_X) + dy / (2 * ISO_Y);
+  const wy = dy / (2 * ISO_Y) - dx / (2 * ISO_X);
+  const n = Math.hypot(wx, wy) || 1;
+  return { x: wx / n, y: wy / n };
 }
 
 function drawCity() {
@@ -405,7 +414,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    iso, worldToScreen, ISO_X, ISO_Y,
+    iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
