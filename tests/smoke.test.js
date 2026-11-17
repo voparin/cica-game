@@ -183,6 +183,14 @@ check('animalPose a kezdőpont körül marad (korlátos távolság)', (() => {
   let far = 0; for (let t = 0; t < 20; t += 1.3) { const p = G.animalPose(an, t); if (Math.hypot(p.x - an.hx, p.y - an.hy) > 90) far++; }
   return far === 0;
 })());
+check('a rajzlista tartalmaz fát és állatot', (() => {
+  G.player.inHouse = null; G.player.riding = null; G.player.x = 0; G.player.y = 0;
+  const list = G.buildDrawList();
+  return list.some(e => e.type === 'fa') && list.some(e => e.type === 'allat');
+})());
+check('drawTree és drawAnimal nem dob hibát', (() => {
+  try { G.drawTree(100, 100, true); G.drawAnimal(100, 100, 0, 'kutya', '#8a6b4a'); return true; } catch (e) { return false; }
+})());
 
 // --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
 check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {

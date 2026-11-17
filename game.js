@@ -413,6 +413,8 @@ function buildDrawList() {
   const R = (Math.hypot(W, H)) / (2 * ISO_Y) + ROAD_SPACING;   // izo-látótér sugara világban
   const list = [];
   for (const h of housesIn(player.x, player.y, R)) list.push({ type: 'house', wx: h.x, wy: h.y, key: depthKey(h.x, h.y), h });
+  for (const t of treesIn(player.x, player.y, R)) list.push({ type: 'fa', wx: t.x, wy: t.y, big: t.big, key: depthKey(t.x, t.y) });
+  for (const g of animalsIn(player.x, player.y, R)) list.push({ type: 'allat', wx: g.x, wy: g.y, a: g.a, kind: g.an.kind, color: g.an.color, key: depthKey(g.x, g.y) });
   for (const v of vehiclesIn(player.x, player.y, R)) {
     if (player.riding && player.riding.id === v.id) continue;
     list.push({ type: v.kind === 'lo' ? 'horse' : 'car', wx: v.x, wy: v.y, a: v.a, color: v.color, key: depthKey(v.x, v.y) });
@@ -524,7 +526,9 @@ function drawCity() {
   for (const e of buildDrawList()) {
     if (e.type === 'house') { drawHouse(e.h); continue; }
     const [sx, sy] = worldToScreen(e.wx, e.wy);
-    if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
+    if (e.type === 'fa') drawTree(sx, sy, e.big);
+    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color);
+    else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
     else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name);   // a járművön ülő: feljebb, hogy kilátszódjon
     else drawPerson(sx, sy, e.a, e.color, e.name);
@@ -534,6 +538,21 @@ function drawCity() {
 function drawShadow(sx, sy, rx, ry) {
   ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(sx, sy + 6, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function drawTree(sx, sy, big) {
+  drawShadow(sx, sy, big ? 20 : 15, big ? 9 : 7);
+  ctx.fillStyle = '#6b4a2e'; ctx.fillRect(sx - 4, sy - 22, 8, 22);         // törzs
+  ctx.fillStyle = '#3f7d46'; ctx.beginPath(); ctx.ellipse(sx, sy - 34, big ? 26 : 20, big ? 30 : 24, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#4f9a57'; ctx.beginPath(); ctx.ellipse(sx - 6, sy - 40, big ? 14 : 11, big ? 16 : 13, 0, 0, Math.PI * 2); ctx.fill();
+}
+function drawAnimal(sx, sy, a, kind, color) {
+  drawShadow(sx, sy, 10, 5);
+  ctx.save(); ctx.translate(sx, sy); ctx.rotate(a); ctx.scale(1, 0.7);
+  ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(0, 0, 11, 6, 0, 0, Math.PI * 2); ctx.fill();   // test
+  ctx.beginPath(); ctx.arc(10, -2, 4, 0, Math.PI * 2); ctx.fill();          // fej
+  if (kind === 'macska') { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-11, -2); ctx.lineTo(-17, -7); ctx.stroke(); }  // macskafarok
+  else { ctx.fillRect(-14, -3, 5, 2); }                                     // kutyafarok
+  ctx.restore();
 }
 function nameTag(sx, sy, name) {
   if (!name) return;
@@ -721,6 +740,7 @@ if (typeof global !== 'undefined') {
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
+    drawTree, drawAnimal,
     streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls,
     drawCity,
     get W() { return W; }, get H() { return H; } };
