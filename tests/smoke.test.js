@@ -42,6 +42,17 @@ check('a hash determinisztikus és stabil', G.hash32(3, 7) === G.hash32(3, 7) &&
 check('ROAD_SPACING rácsán az út felismerhető', G.onRoad(0, 0) === true && G.onRoad(G.ROAD_SPACING, 0) === true);
 check('a háztömb közepén nincs út', G.onRoad(G.ROAD_SPACING / 2, G.ROAD_SPACING / 2) === false);
 check('nearestRoad a legközelebbi rácsvonalra tesz', (() => { const r = G.nearestRoad(G.ROAD_SPACING / 2 + 5, 123); return Math.abs(r.x - G.ROAD_SPACING) < 1e-6; })());
+
+// --- Világ: házak ---
+check('housesIn determinisztikus (ugyanaz a terület → ugyanaz a ház)', (() => {
+  const a = G.housesIn(0, 0, 1200), b = G.housesIn(0, 0, 1200);
+  return a.length > 0 && a.length === b.length && a[0].x === b[0].x && a[0].y === b[0].y;
+})());
+check('a ház nincs az úttesten (a háztömb belsejében van)', G.housesIn(0, 0, 1800).every(h => !G.onRoad(h.x, h.y)));
+check('a ház ajtaja a házon kívül, az út felé esik', (() => {
+  const h = G.housesIn(0, 0, 1800)[0];
+  return h.door && Math.hypot(h.door.x - h.x, h.door.y - h.y) > h.w / 2;
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 
