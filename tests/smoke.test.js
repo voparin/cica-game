@@ -199,6 +199,12 @@ check('a hibás / ismeretlen üzenetet csendben kihagyja', true);
 check('a sprite-rajzolók léteznek', typeof G.drawPerson === 'function' && typeof G.drawCarSprite === 'function' && typeof G.drawHorseSprite === 'function');
 check('egy sprite rajzolása nem dob hibát (kamu ctx)', (() => { try { G.drawPerson(100, 100, 0, '#fff', 'A'); G.drawCarSprite(100, 100, 1, '#f00'); G.drawHorseSprite(100, 100, 2, '#8a5a2b'); return true; } catch (e) { return false; } })());
 
+// --- Ház- és utcarajz ---
+check('streetStyle determinisztikus és 0..2 közötti', (() => { const a = G.streetStyle(2, 3), b = G.streetStyle(2, 3); return a === b && a >= 0 && a <= 2; })());
+check('a drawHouse és drawStreets léteznek és nem dobnak', (() => {
+  try { const h = G.housesIn(0, 0, 2400)[0]; G.drawHouse(h); G.drawStreets(); return true; } catch (e) { return false; }
+})());
+
 // egy képkocka lerajzolása nem dob hibát (kamu ctx)
 let drewOk = true;
 try { rafCb && rafCb(16); } catch (e) { drewOk = false; console.error(e); }

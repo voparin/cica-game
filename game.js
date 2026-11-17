@@ -284,6 +284,63 @@ function buildDrawList() {
   return list;
 }
 
+// a kereszteződés burkolat-stílusa (0..2), determinisztikusan a rácsindexből
+function streetStyle(gx, gy) { return hash32(gx, gy) % 3; }
+
+// izo sokszög kitöltése világ-pontok tömbjéből (z-vel)
+function fillIsoPoly(pts, fill) {
+  ctx.fillStyle = fill; ctx.beginPath();
+  pts.forEach(([wx, wy, wz], i) => { const [sx, sy] = worldToScreen(wx, wy, wz || 0); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); });
+  ctx.closePath(); ctx.fill();
+}
+const shade = (hex, f) => {                           // szín sötétítése f (0..1) arányban
+  const n = parseInt(hex.slice(1), 16); const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const d = c => Math.max(0, Math.round(c * (1 - f)));
+  return `rgb(${d(r)},${d(g)},${d(b)})`;
+};
+
+// utak izometrikusan: aszfalt sávok a rácsvonalak mentén + felezővonal
+function drawStreets() {
+  const R = Math.hypot(W, H) / (2 * ISO_Y) + ROAD_SPACING;
+  const g0 = Math.floor((player.x - R) / ROAD_SPACING), g1 = Math.ceil((player.x + R) / ROAD_SPACING);
+  const h0 = Math.floor((player.y - R) / ROAD_SPACING), h1 = Math.ceil((player.y + R) / ROAD_SPACING);
+  for (let gx = g0; gx <= g1; gx++) {                 // függőleges utak (állandó világ-x)
+    const rx = gx * ROAD_SPACING;
+    fillIsoPoly([[rx - ROAD_HALF, player.y - R], [rx + ROAD_HALF, player.y - R], [rx + ROAD_HALF, player.y + R], [rx - ROAD_HALF, player.y + R]], '#394a5a');
+  }
+  for (let gy = h0; gy <= h1; gy++) {                 // vízszintes utak (állandó világ-y)
+    const ry = gy * ROAD_SPACING;
+    fillIsoPoly([[player.x - R, ry - ROAD_HALF], [player.x + R, ry - ROAD_HALF], [player.x + R, ry + ROAD_HALF], [player.x - R, ry + ROAD_HALF]], '#39424d');
+  }
+}
+
+// egy ház kirajzolása izometrikusan: látható oldalfalak + tető a típus szerint
+function drawHouse(h) {
+  const hw = h.w / 2, hh = h.h / 2, z = h.height;
+  // oldalfalak (eltérő árnyalattal, hogy legyen mélység)
+  fillIsoPoly([[h.x - hw, h.y - hh, 0], [h.x - hw, h.y + hh, 0], [h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z]], shade(h.wall, 0.28));
+  fillIsoPoly([[h.x - hw, h.y + hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], shade(h.wall, 0.12));
+  fillIsoPoly([[h.x + hw, h.y - hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x + hw, h.y - hh, z]], shade(h.wall, 0.2));
+  fillIsoPoly([[h.x - hw, h.y - hh, 0], [h.x + hw, h.y - hh, 0], [h.x + hw, h.y - hh, z], [h.x - hw, h.y - hh, z]], h.wall);
+  // tető
+  if (h.roofType === 'lapos') {
+    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.roof);
+  } else if (h.roofType === 'sator') {
+    const peak = z + 26;
+    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, peak]], h.roof);
+    fillIsoPoly([[h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, peak]], shade(h.roof, 0.15));
+    fillIsoPoly([[h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z], [h.x, h.y, peak]], shade(h.roof, 0.28));
+    fillIsoPoly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z], [h.x, h.y, peak]], shade(h.roof, 0.2));
+  } else {                                            // nyereg: gerinc a hosszabb tengely mentén
+    const peak = z + 22;
+    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, peak], [h.x - hw, h.y, peak]], h.roof);
+    fillIsoPoly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x + hw, h.y, peak], [h.x - hw, h.y, peak]], shade(h.roof, 0.22));
+  }
+  // ajtó a front falon (a kamera felőli, világos oldalon)
+  const [dx, dy] = worldToScreen(h.x, h.y - hh, Math.min(20, z * 0.5));
+  ctx.fillStyle = '#3a2d22'; ctx.fillRect(dx - 5, dy - 10, 10, 12);
+}
+
 function drawCity() {
   // háttér már kész (draw() tölti); most az utak
   const left = player.x - W / 2, top = player.y - H / 2;
@@ -475,6 +532,7 @@ if (typeof global !== 'undefined') {
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
+    streetStyle, drawStreets, drawHouse, fillIsoPoly,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
