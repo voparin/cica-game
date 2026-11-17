@@ -275,15 +275,54 @@ function updateInterior(dt) {
   player.ix = Math.max(16, Math.min(r.rw - 16, player.ix));   // a falakon belül
   player.iy = Math.max(16, Math.min(r.rh - 16, player.iy));
 }
+// a berendezett lakószoba (felülnézet): ox/oy a szoba bal-felső sarka a képernyőn, rw/rh a mérete
+function drawBedroom(ox, oy, rw, rh) {
+  // ágy – bal oldal
+  const bx = ox + 30, by = oy + 40, bw = 70, bh = rh - 80;
+  ctx.fillStyle = '#5a3e2b'; ctx.fillRect(bx, by, bw, bh);                 // ágykeret
+  ctx.fillStyle = '#c9d6e5'; ctx.fillRect(bx + 6, by + 6, bw - 12, 34);    // párna
+  ctx.fillStyle = '#7fa6d8'; ctx.fillRect(bx + 6, by + 44, bw - 12, bh - 50); // takaró
+  // szőnyeg – közép
+  const cx = ox + rw / 2, cy = oy + rh / 2;
+  ctx.fillStyle = '#a23c4b'; ctx.fillRect(cx - 55, cy - 38, 110, 76);
+  ctx.fillStyle = '#d98a97'; ctx.fillRect(cx - 42, cy - 27, 84, 54);
+  ctx.fillStyle = '#a23c4b'; ctx.fillRect(cx - 22, cy - 14, 44, 28);
+  // szekrény – jobb oldal
+  const wx = ox + rw - 100, wy = oy + 46, ww = 70, wh = 90;
+  ctx.fillStyle = '#6b4a30'; ctx.fillRect(wx, wy, ww, wh);                 // szekrény
+  ctx.fillStyle = '#4a3220'; ctx.fillRect(wx + ww / 2 - 1, wy, 2, wh);     // ajtóosztás
+  // a szekrény TETEJÉN: 3 könyv + mellette egy társas
+  const books = ['#d4453b', '#3f8f54', '#3a6fb0'];
+  books.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(wx + 6 + i * 12, wy - 22, 9, 22); });   // 3 könyvgerinc
+  ctx.fillStyle = '#e0b43a'; ctx.fillRect(wx + 46, wy - 20, 20, 20);       // társas doboza
+  ctx.strokeStyle = '#7a5e1f'; ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(wx + 46 + i * 5, wy - 20); ctx.lineTo(wx + 46 + i * 5, wy); ctx.moveTo(wx + 46, wy - 20 + i * 5); ctx.lineTo(wx + 66, wy - 20 + i * 5); ctx.stroke(); }  // rács
+  // a szekrény ALATT a padlón: 1 könyv, 3 színes ceruza, maci
+  const fy = wy + wh + 14;
+  ctx.fillStyle = '#8a4fb0'; ctx.fillRect(wx, fy, 26, 16);                 // egy könyv (fentről)
+  const pencils = ['#d4453b', '#3f8f54', '#3a6fb0'];                       // 3 színes ceruza
+  pencils.forEach((c, i) => { ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + 34, fy + 2 + i * 6); ctx.lineTo(wx + 58, fy + 2 + i * 6); ctx.stroke(); });
+  // maci: fej + has + fülek
+  const mx = wx + 50, my = fy + 34;
+  ctx.fillStyle = '#9a6b3f';
+  ctx.beginPath(); ctx.arc(mx, my, 12, 0, Math.PI * 2); ctx.fill();        // has
+  ctx.beginPath(); ctx.arc(mx, my - 16, 8, 0, Math.PI * 2); ctx.fill();    // fej
+  ctx.beginPath(); ctx.arc(mx - 7, my - 22, 3, 0, Math.PI * 2); ctx.arc(mx + 7, my - 22, 3, 0, Math.PI * 2); ctx.fill();  // fülek
+}
 function drawInterior() {
   const r = player.inHouse;
   ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
   const ox = W / 2 - r.rw / 2, oy = H / 2 - r.rh / 2;         // a szoba középre
   ctx.fillStyle = '#4b3f36'; ctx.fillRect(ox, oy, r.rw, r.rh);
   ctx.fillStyle = '#caa36f'; ctx.fillRect(ox + r.exit.x - 16, oy + r.exit.y - 6, 32, 12);   // kijárat
+  if (r.room && r.room.furnished) drawBedroom(ox, oy, r.rw, r.rh);          // lakóház: berendezés (felirat nélkül)
+  else if (r.room && r.room.label) {                                        // speciális ház: a típus neve középen
+    ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
+  }
   drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name);
   ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('Házban vagy – menj a kijárathoz és nyomd meg az E-t', 12, 24);
+  ctx.fillText('E: kijárat', 12, 24);
 }
 
 // ===== Rajzolás =====
@@ -618,7 +657,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL,
+    roomFor, TYPE_LABEL, drawBedroom,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,

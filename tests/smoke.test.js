@@ -214,6 +214,20 @@ check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.leaveHouse();
   return t === h.type;
 })());
+check('drawBedroom létezik és a lakószoba nem dob hibát', (() => {
+  G.player.riding = null; const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
+  let ok = true; try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }
+  G.leaveHouse(); return ok && typeof G.drawBedroom === 'function';
+})());
+check('a speciális típusok belseje sem dob hibát (mind az 5)', (() => {
+  let ok = true;
+  for (const t of ['gyar', 'iskola', 'iroda', 'bolt', 'etterem']) {
+    const h = G.housesIn(0, 0, 3000)[0]; h.type = t; G.enterHouse(h);
+    try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }
+    G.leaveHouse();
+  }
+  return ok;
+})());
 
 // --- Többjátékos: jármű és házban lét ---
 check('netState járműben a car/kind mezőt küldi', (() => {
