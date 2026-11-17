@@ -38,6 +38,13 @@ function onRoad(x, y) {
 const HOUSE_WALLS = ['#b85c4a', '#d9a05b', '#6f8f6a', '#5b7fa6', '#c9b47e', '#9a6fa0', '#c77f9e', '#7a8a99'];
 const HOUSE_ROOFS = ['#8a3b2e', '#5a4632', '#394a5a', '#6b5641', '#3f5e46'];
 const ROOF_TYPES = ['nyereg', 'sator', 'lapos'];
+const HOUSE_TYPES = ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'];
+// determinisztikus típus a seedből: a lakóház ~50%, a másik öt a maradékon osztozik
+function houseType(seed) {
+  const r = (seed >>> 12) % 10;
+  if (r < 5) return 'lakohaz';
+  return HOUSE_TYPES[1 + ((seed >>> 16) % 5)];     // gyar..etterem
+}
 
 // Egy háztömb (két szomszédos rácsvonal közötti négyzet) determinisztikus házai.
 // A tömböt a bal-felső sarkának rácsindexe (gx, gy) azonosítja.
@@ -68,6 +75,7 @@ function housesInBlock(gx, gy) {
       roof: HOUSE_ROOFS[(seed >>> 3) % HOUSE_ROOFS.length],
       roofType: ROOF_TYPES[(seed >>> 6) % ROOF_TYPES.length],
       height: 34 + ((seed >>> 9) % 4) * 14,              // 34..76 px „magasság" (izo z)
+      type: houseType(seed),
     });
   }
   return out;
@@ -577,6 +585,7 @@ if (typeof global !== 'undefined') {
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,
+    HOUSE_TYPES, houseType,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,

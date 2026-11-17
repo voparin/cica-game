@@ -87,6 +87,19 @@ check('a vizuális mezők determinisztikusak (ugyanaz a ház → ugyanaz a szín
   return a.wall === b.wall && a.roofType === b.roofType && a.height === b.height;
 })());
 
+// --- Háztípusok ---
+check('houseType determinisztikus és a hat érték egyike', (() => {
+  const t = G.houseType(12345);
+  return G.houseType(12345) === t && ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'].includes(t);
+})());
+check('a lakóház a leggyakoribb típus', (() => {
+  const cnt = {}; for (let s = 0; s < 4000; s++) { const t = G.houseType(s); cnt[t] = (cnt[t] || 0) + 1; }
+  return cnt.lakohaz > (cnt.gyar || 0) && cnt.lakohaz > (cnt.bolt || 0);
+})());
+check('minden háznak van type mezője (a hat érték egyike)', (() => {
+  return G.housesIn(0, 0, 3000).every(h => ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'].includes(h.type));
+})());
+
 // --- Ütközés a házakkal ---
 check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
   const p = { x: 5, y: 1 };                 // egy 0,0 középpontú 20x20 téglalap belsejében
