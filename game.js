@@ -309,23 +309,47 @@ function drawCity() {
   }
 }
 
-function drawPlayer(x, y, a, color, name) {
-  const [sx, sy] = worldToScreen(x, y);
-  ctx.save();
-  ctx.translate(sx, sy);
-  ctx.rotate(a);
-  ctx.fillStyle = color;
-  ctx.fillRect(-12, -12, 24, 24);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(8, -3, 6, 6);                          // kis „orr”: merre néz
-  ctx.restore();
-  if (name) {
-    ctx.fillStyle = '#fff';
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(name, sx, sy - 18);
-  }
+function drawShadow(sx, sy, rx, ry) {
+  ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(sx, sy + 6, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
 }
+function nameTag(sx, sy, name) {
+  if (!name) return;
+  ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(name, sx, sy - 34);
+}
+// ember: árnyék, fej, törzs (ruha = color); az irány enyhén jelezve
+function drawPerson(sx, sy, a, color, name) {
+  drawShadow(sx, sy, 10, 5);
+  ctx.save(); ctx.translate(sx, sy);
+  ctx.fillStyle = color || '#2f6fd0'; ctx.beginPath(); ctx.ellipse(0, -10, 7, 11, 0, 0, Math.PI * 2); ctx.fill();   // törzs/kabát
+  ctx.fillStyle = '#e8c9a0'; ctx.beginPath(); ctx.arc(0, -22, 6, 0, Math.PI * 2); ctx.fill();                       // fej
+  ctx.fillStyle = '#3a2d22'; ctx.fillRect(Math.cos(a) * 3 - 2, -24 + Math.sin(a) * 2, 4, 2);                        // nézési jelzés
+  ctx.restore(); nameTag(sx, sy, name);
+}
+// autó: árnyék, karosszéria, szélvédő, 4 kerék, fényszóró; az a szög szerint forgatva
+function drawCarSprite(sx, sy, a, color, name) {
+  drawShadow(sx, sy, 22, 9);
+  ctx.save(); ctx.translate(sx, sy - 6); ctx.rotate(a); ctx.scale(1, 0.62);   // izo-lapítás
+  ctx.fillStyle = '#111'; for (const [wx, wy] of [[-13, -11], [13, -11], [-13, 11], [13, 11]]) ctx.fillRect(wx - 3, wy - 3, 6, 6);
+  ctx.fillStyle = color || '#d42020'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-20, -11, 40, 22, 5) : ctx.rect(-20, -11, 40, 22); ctx.fill();
+  ctx.fillStyle = '#bfe0ff'; ctx.fillRect(4, -8, 10, 16);                     // szélvédő
+  ctx.fillStyle = '#fff'; ctx.fillRect(18, -8, 3, 4); ctx.fillRect(18, 4, 3, 4);  // fényszóró
+  ctx.restore(); nameTag(sx, sy, name);
+}
+// ló: árnyék, test, nyak+fej, 4 láb, farok; az a szög szerint forgatva
+function drawHorseSprite(sx, sy, a, color, name) {
+  drawShadow(sx, sy, 18, 8);
+  ctx.save(); ctx.translate(sx, sy - 5); ctx.rotate(a); ctx.scale(1, 0.62);
+  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 3;
+  ctx.beginPath(); for (const lx of [-10, -4, 6, 12]) { ctx.moveTo(lx, 4); ctx.lineTo(lx, 12); } ctx.stroke();   // lábak
+  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2); ctx.fill(); // test
+  ctx.beginPath(); ctx.ellipse(16, -6, 5, 3, -0.5, 0, Math.PI * 2); ctx.fill();                                 // fej
+  ctx.fillRect(10, -8, 4, 8);                                                                                    // nyak
+  ctx.strokeStyle = '#3a2d22'; ctx.beginPath(); ctx.moveTo(-16, -2); ctx.lineTo(-22, 4); ctx.stroke();          // farok
+  ctx.restore(); nameTag(sx, sy, name);
+}
+// visszafelé kompatibilis: a régi drawPlayer most embert rajzol
+function drawPlayer(x, y, a, color, name) { const [sx, sy] = worldToScreen(x, y); drawPerson(sx, sy, a, color, name); }
 
 function draw() {
   if (player.inHouse) { drawInterior(); return; }
@@ -450,6 +474,7 @@ if (typeof global !== 'undefined') {
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir,
     depthKey, buildDrawList,
+    drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
