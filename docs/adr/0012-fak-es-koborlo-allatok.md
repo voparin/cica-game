@@ -15,8 +15,18 @@ seedből kell jönniük, és a végtelen világban nem tárolhatunk állapotot h
   egy rögzített irányba). Az `updatePlayer` és az `updateVehiclePhysics` hívja.
 - **Állatok:** `animalFor(h)` – a ház seedjéből faj (kutya/macska), szín és
   kezdőpont. `animalPose(an, t)` – determinisztikus „séta" a kezdőpont körül, az
-  időből (`t`) és a seedből számolva, korlátos távolságon belül (`ANIMAL_ROAM`).
+  időből (`t`) és a seedből számolva, korlátos távolságon belül (`ANIMAL_ROAM`),
+  fajonként eltérő jelleggel (a macska lassú, kis körzet; a kutya fürge, nagy
+  körzet) és seedből vett fáziseltolással (nem egyszerre mozognak).
   Nincs házankénti állapot-tárolás; minden kliensnél ugyanaz.
+- **A ház kizárása (0.6.0):** az állat a saját háza (`an.house`) téglalapjától
+  jobbra marad (sima, egyoldali korlát), így sosem mászik a falra.
+- **Macska a fán (0.6.0):** `animalFor` eltárolja a legközelebbi fát (`an.tree`);
+  az `animalPose` determinisztikus ciklusban `onTree: true` állapotba kerül (a
+  pozíció a fánál, a rajz a lombnál, feljebb).
+- **Kutya-ugatás (0.6.0):** az `animalsIn` megjelöli a `BARK_RANGE`-en belüli
+  kutyapárokat `barking: true`-val (egymás felé fordulnak); a `drawAnimal` „Vau!"
+  buborékot rajzol – csak vizuális, nincs hang, nincs tárolás.
 
 ## Elvetett alternatívák
 - Tárolt, szabadon kóborló állatok: a végtelen világban követni/menteni kellene

@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.6.0 – 2026-11-17
+
+- Az állatok nem mennek a házba (a háztól egy sima, egyoldali korláttal kint
+  maradnak) – nincs több falramászás.
+- A macskák időnként felmásznak a legközelebbi fára, és a lomb tetején ülnek,
+  majd lejönnek (determinisztikus ciklus).
+- Két közeli kutya fölött „Vau!" buborék jelenik meg, és egymás felé fordulnak
+  (csak vizuális, nincs hang).
+
 ## 0.5.2 – 2026-11-17
 
 - Az ajtók a fal síkjában fekszenek (izometrikus `doorQuad`), nem állnak ki
