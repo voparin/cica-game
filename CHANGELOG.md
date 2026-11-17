@@ -2,6 +2,17 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.3.1 – 2026-11-17
+
+Látvány- és járműjavítások (a felhasználó jelzései alapján):
+
+- A járművek az izometrikus szögük szerint állnak (`isoAngle`), nem „fejjel lefelé".
+- Nagyobb autó- és ló-sprite-ok, arányos árnyékkal.
+- A játékos látszik a lovon és az autóban (a rajzlista a járművet ÉS a rajta ülő
+  személyt is tartalmazza; a többi játékoson is látszik, amin ül).
+- A járművek ott maradnak, ahol leszálltunk, és a hely mentődik (localStorage,
+  ADR-0009); egy elvezetett jármű az új helyén is megtalálható be-/felszálláshoz.
+
 ## 0.3.0 – 2026-11-17
 
 Látvány: 2.5D izometrikus nézet (a játékmenet változatlan):
