@@ -210,6 +210,20 @@ check('az állat sosem kerül a ház alaprajzába (nem mászik a falra)', (() =>
   }
   return inside === 0;
 })());
+check('a macska időnként felmászik a fára (onTree), a kutya soha', (() => {
+  const base = G.animalFor(G.housesIn(0, 0, 3000)[0]);
+  const cat = { ...base, kind: 'macska', tree: { x: base.hx + 30, y: base.hy } };
+  const dog = { ...base, kind: 'kutya', tree: { x: 0, y: 0 } };
+  let catUp = 0, dogUp = 0;
+  for (let t = 0; t < 60; t += 0.5) { if (G.animalPose(cat, t).onTree) catUp++; if (G.animalPose(dog, t).onTree) dogUp++; }
+  return catUp > 0 && dogUp === 0;
+})());
+check('fán ülve a macska pozíciója a fánál van', (() => {
+  const base = G.animalFor(G.housesIn(0, 0, 3000)[0]); const tree = { x: base.house.x + 200, y: base.house.y + 40 };
+  const cat = { ...base, kind: 'macska', tree };
+  for (let t = 0; t < 60; t += 0.25) { const p = G.animalPose(cat, t); if (p.onTree) return Math.hypot(p.x - tree.x, p.y - tree.y) < 1; }
+  return false;
+})());
 check('két állat NEM szinkronban mozog (eltérő fázis a seedből)', (() => {
   const a = { kind: 'macska', hx: 0, hy: 0, seed: 111 }, b = { kind: 'macska', hx: 0, hy: 0, seed: 222 };
   let apart = 0; for (let t = 0; t < 8; t += 0.7) { const pa = G.animalPose(a, t), pb = G.animalPose(b, t); if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > 8) apart++; }

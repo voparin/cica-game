@@ -192,7 +192,14 @@ const ANIMAL_ROAM = 60;          // ennyit kóborol a kezdőpont körül
 function animalFor(h) {
   const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
   const color = kind === 'kutya' ? '#8a6b4a' : '#9a9a9a';
-  return { kind, color, hx: h.x + h.w / 2 + 26, hy: h.y, seed: h.seed, house: { x: h.x, y: h.y, w: h.w, h: h.h } };
+  const hx = h.x + h.w / 2 + 26, hy = h.y;
+  let tree = null;
+  if (kind === 'macska') {                               // a macskához a legközelebbi fa (fára mászáshoz)
+    let best = null, bd = 220;
+    for (const tr of treesIn(hx, hy, 260)) { const d = Math.hypot(tr.x - hx, tr.y - hy); if (d < bd) { bd = d; best = tr; } }
+    tree = best ? { x: best.x, y: best.y } : null;
+  }
+  return { kind, color, hx, hy, seed: h.seed, house: { x: h.x, y: h.y, w: h.w, h: h.h }, tree };
 }
 // determinisztikus „séta" a kezdőpont körül; fajfüggő jelleg + seedből vett fáziseltolás,
 // hogy mindegyik máshol járjon és máshogy mozogjon; a ház alaprajzából kiszorítjuk (ne másszon a falra)
@@ -216,11 +223,17 @@ function animalPose(an, t) {
   }
   // a ház a kezdőponttól balra van; tartsuk a háztól jobbra (sima, egyoldali korlát – nincs átugrás)
   if (an.house) { const edge = an.house.x + an.house.w / 2 + 8; if (x < edge) x = edge; }
-  return { x, y, a };
+  // a macska időnként felmászik a legközelebbi fára (determinisztikus ciklus a seedből + időből)
+  let onTree = false;
+  if (an.kind === 'macska' && an.tree) {
+    const cyc = (t * 0.12 + (an.seed % 100) / 100) % 1;    // ~8 mp-es ciklus, seedből eltolva
+    if (cyc > 0.55 && cyc < 0.8) { onTree = true; x = an.tree.x; y = an.tree.y; a = 0; }
+  }
+  return { x, y, a, onTree };
 }
 function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
   const out = [];
-  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a }); }
+  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree }); }
   return out;
 }
 
