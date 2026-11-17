@@ -10,6 +10,30 @@ function resize() { W = canvas.width = window.innerWidth; H = canvas.height = wi
 window.addEventListener('resize', resize);
 resize();
 
+// ===== Világ (végtelen, determinisztikus generálás) – ADR-0003 =====
+// Minden a pozícióból számolódik: nincs világbejárás, mindig csak a kamera körüli cellák.
+const ROAD_SPACING = 600;        // az utak (rácsvonalak) távolsága px-ben
+const ROAD_HALF = 26;            // az úttest fél-szélessége (az útvonaltól mérve)
+
+// pozíció-alapú egész hash → 0..2^32-1, determinisztikus (ugyanaz a bemenet → ugyanaz a kimenet)
+function hash32(ix, iy) {
+  let h = (ix | 0) * 374761393 + (iy | 0) * 668265263;
+  h = (h ^ (h >>> 13)) >>> 0;
+  h = (h * 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
+const rand01 = (ix, iy, salt = 0) => hash32(ix * 2654435761 + salt, iy) / 4294967296;   // 0..1
+
+// a legközelebbi vízszintes és függőleges rácsvonal
+function nearestRoad(x, y) {
+  return { x: Math.round(x / ROAD_SPACING) * ROAD_SPACING, y: Math.round(y / ROAD_SPACING) * ROAD_SPACING };
+}
+// úton van-e (bármelyik rácsvonal úttestjén belül)
+function onRoad(x, y) {
+  const r = nearestRoad(x, y);
+  return Math.abs(x - r.x) <= ROAD_HALF || Math.abs(y - r.y) <= ROAD_HALF;
+}
+
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
@@ -155,5 +179,6 @@ netConnect();                                         // többjátékos mód, ha
 // a füstteszt számára (kamu böngészőkörnyezetben eval-eljük ezt a fájlt)
 if (typeof global !== 'undefined') {
   global.G = { player, net, netState, netReceive, updatePlayer, keys,
+    hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     get W() { return W; }, get H() { return H; } };
 }

@@ -36,6 +36,12 @@ eval(src);
 const G = global.G;
 
 check('a game.js lefut és közzéteszi a felületét (G)', !!G && !!G.player && !!G.net);
+
+// --- Világ: utcarács ---
+check('a hash determinisztikus és stabil', G.hash32(3, 7) === G.hash32(3, 7) && G.hash32(3, 7) !== G.hash32(7, 3));
+check('ROAD_SPACING rácsán az út felismerhető', G.onRoad(0, 0) === true && G.onRoad(G.ROAD_SPACING, 0) === true);
+check('a háztömb közepén nincs út', G.onRoad(G.ROAD_SPACING / 2, G.ROAD_SPACING / 2) === false);
+check('nearestRoad a legközelebbi rácsvonalra tesz', (() => { const r = G.nearestRoad(G.ROAD_SPACING / 2 + 5, 123); return Math.abs(r.x - G.ROAD_SPACING) < 1e-6; })());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 
