@@ -299,6 +299,7 @@ function draw() {
   ctx.font = '14px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(net.online ? `Online – ${net.others.size + 1} játékos` : 'Offline (egyjátékos)', 12, 22);
+  ctx.fillText('Nyilak: mozgás/vezetés   E: ház be/ki, jármű be/felszállás', 12, 40);
 }
 
 // ===== Többjátékos mód (ADR-0002) =====

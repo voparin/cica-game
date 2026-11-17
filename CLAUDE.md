@@ -12,7 +12,7 @@ követi.
 | Fájl | Szerep |
 |---|---|
 | `index.html` | betölti a canvas-t és a `game.js`-t |
-| `game.js` | a játék (jelenleg csonk): mozgatható játékos + a többiek kirajzolása (ADR-0001) |
+| `game.js` | a játék: végtelen generált város (utcák, házak), gyalogos, lovak/autók, `E`-s interakció (ADR-0001, 0003–0005) |
 | `server.js` | többjátékos szerver (ADR-0002): kiszolgálja a játékot, `/ws` – a játékosok helyzete; fiókok, Google-belépés, PvP; függőség nélkül |
 | `Dockerfile`, `.gcloudignore` | a szerver a Google Cloud Runra (külön `szofi-game` projekt) |
 | `tests/smoke.test.js` | füstteszt kamu böngészőkörnyezetben (Node, függőség nélkül) |
@@ -28,6 +28,12 @@ követi.
 - **Többjátékos mód helyben:** `node server.js` (alapból a 8080 porton), majd a
   böngészőben `http://localhost:8080`. A fiókok ilyenkor a `data/profiles.json`
   fájlba mentődnek (nincs verziózva, lásd `.gitignore`).
+
+## Vezérlők
+
+- **Nyilak:** gyalogos mozgás; járműben vezetés (fel/le gyorsít-fékez, bal/jobb forgat).
+- **E:** kontextusfüggő – ajtó közelében ház be/ki (külön belső szoba), jármű
+  közelében be-/felszállás (autó / ló), járműből kiszállás.
 
 ## Tesztek
 
@@ -50,6 +56,9 @@ csak sikeres teszt után publikál.
 - A szerver csatlakozáskor `{ t:'hello', id }`-t küld, majd `TICK_MS`-enként
   `{ t:'players', list:[…] }`-t mindenki helyzetével.
 - Fiók nélkül a megjelenített név „Vendég <id>”; belépve a fiók neve.
+- Járműben a `netState` a `car: true` és `kind` (`'auto'`/`'lo'`) mezőt is küldi,
+  így a többiek járműként látnak. Házban lét alatt a bejárati ajtó pozícióját
+  küldjük (a házban lévő a többieknek az ajtónál áll) – nincs szerver-módosítás.
 
 Új, a hálózaton átvitt mezőt a `game.js` `netState`-ben **és** a `server.js`
 `cleanState`-ben is fel kell venni, különben a szerver kiszűri.
