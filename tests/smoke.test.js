@@ -201,6 +201,20 @@ check('ajtónál E-re bemegy, majd a kijáraton kijön az ajtó elé', (() => {
   return inside && outside;
 })());
 
+// --- Szoba típus szerint ---
+check('roomFor a lakóháznak berendezést ad (nincs felirat), a többinek feliratot', (() => {
+  const lak = G.roomFor('lakohaz'), gyar = G.roomFor('gyar');
+  return lak.furnished === true && !lak.label && gyar.furnished === false && typeof gyar.label === 'string' && gyar.label.length > 0;
+})());
+check('belépéskor a szoba megkapja a ház típusát', (() => {
+  G.player.riding = null; G.player.inHouse = null;
+  const h = G.housesIn(0, 0, 3000)[0];
+  G.enterHouse(h);
+  const t = G.player.inHouse.type;
+  G.leaveHouse();
+  return t === h.type;
+})());
+
 // --- Többjátékos: jármű és házban lét ---
 check('netState járműben a car/kind mezőt küldi', (() => {
   G.player.inHouse = null; G.player.riding = { x: 10, y: 20, a: 0.5, angle: 0.5, kind: 'auto' };

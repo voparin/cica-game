@@ -235,10 +235,17 @@ function nearestDoor(x, y, range) {
   }
   return best;
 }
+// a szoba leírása a ház típusa szerint: a lakóház berendezett (felirat nélkül),
+// a többi egyszerű szoba a típus magyar nevével
+const TYPE_LABEL = { gyar: 'Gyár', iskola: 'Iskola', iroda: 'Iroda', bolt: 'Bolt', etterem: 'Étterem' };
+function roomFor(type) {
+  if (type === 'lakohaz') return { furnished: true, label: '' };
+  return { furnished: false, label: TYPE_LABEL[type] || 'Ház' };
+}
 // belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
 function enterHouse(h) {
   const rw = 300 + (h.seed % 160), rh = 220 + ((h.seed >> 8) % 140);
-  player.inHouse = { house: h, rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
+  player.inHouse = { house: h, type: h.type || 'lakohaz', room: roomFor(h.type || 'lakohaz'), rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
   player.ix = rw / 2; player.iy = rh - 40;               // a szobában, a kijárat közelében
 }
 function leaveHouse() {
@@ -611,6 +618,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
+    roomFor, TYPE_LABEL,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
