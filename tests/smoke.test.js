@@ -82,6 +82,20 @@ check('a járművek az úton vannak, és van köztük ló és autó is', (() => 
 check('előre gyorsít', (() => { const v = { x: 0, y: 0, angle: 0, speed: 0, kind: 'auto' }; G.updateVehiclePhysics(v, { fwd: 1, turn: 0 }, 0.1); return v.speed > 0; })());
 check('a forgatás változtatja a szöget és mozog', (() => { const v = { x: 0, y: 0, angle: 0, speed: 100, kind: 'auto' }; const a0 = v.angle; G.updateVehiclePhysics(v, { fwd: 0, turn: 1 }, 0.1); return v.angle !== a0 && (v.x !== 0 || v.y !== 0); })());
 check('súrlódás lassít bemenet nélkül', (() => { const v = { x: 0, y: 0, angle: 0, speed: 100, kind: 'auto' }; G.updateVehiclePhysics(v, { fwd: 0, turn: 0 }, 0.1); return v.speed < 100; })());
+
+// --- Be-/felszállás ---
+check('a közeli járműbe beszáll, majd kiszáll', (() => {
+  G.player.riding = null; G.player.inHouse = null;
+  const v = G.vehiclesIn(0, 0, 6000)[0];
+  G.player.x = v.x + 10; G.player.y = v.y;               // a jármű mellé
+  G.toggleVehicle();
+  const inside = G.player.riding && G.player.riding.id === v.id;
+  G.toggleVehicle();
+  return inside && !G.player.riding;
+})());
+check('messziről nincs beszállás', (() => {
+  G.player.riding = null; G.player.x = 1e6; G.player.y = 1e6; G.toggleVehicle(); return !G.player.riding;
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 

@@ -111,12 +111,16 @@ function vehiclesIn(cx, cy, radius) {
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
-const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0' };
+const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null };
 const keys = Object.create(null);
-window.addEventListener('keydown', e => { keys[e.key] = true; });
-window.addEventListener('keyup', e => { keys[e.key] = false; });
+window.addEventListener('keydown', e => {
+  if ((e.key === 'e' || e.key === 'E') && !keys._e) { keys._e = true; onUse(); }
+  keys[e.key] = true;
+});
+window.addEventListener('keyup', e => { if (e.key === 'e' || e.key === 'E') keys._e = false; keys[e.key] = false; });
 
 function updatePlayer(dt) {
+  if (player.riding || player.inHouse) return;        // vezetés közben / házban nem gyalogos
   let dx = 0, dy = 0;
   if (keys.ArrowLeft) dx -= 1;
   if (keys.ArrowRight) dx += 1;
@@ -149,6 +153,32 @@ function updateVehiclePhysics(v, input, dt) {
   v.a = v.angle;
   collideHouses(v, 14);
 }
+
+const ENTER_RANGE = 46;          // ennyin belül lehet be-/felszállni
+function toggleVehicle() {
+  if (player.inHouse) return;                             // házban nincs jármű
+  if (player.riding) {                                    // kiszállás a jármű mellé
+    player.x = player.riding.x + Math.cos(player.riding.angle + Math.PI / 2) * 24;
+    player.y = player.riding.y + Math.sin(player.riding.angle + Math.PI / 2) * 24;
+    player.riding = null;
+    return;
+  }
+  let best = null, bestD = ENTER_RANGE;                   // a legközelebbi jármű a sugáron belül
+  for (const v of vehiclesIn(player.x, player.y, ENTER_RANGE * 2)) {
+    const d = Math.hypot(v.x - player.x, v.y - player.y);
+    if (d < bestD) { bestD = d; best = v; }
+  }
+  if (best) { best.speed = 0; best.angle = best.a; player.riding = best; }
+}
+// vezetés: a nyilak a járművet irányítják, a kamera a járművet követi
+function updateDriving(dt) {
+  const v = player.riding; if (!v) return;
+  const fwd = (keys.ArrowUp ? 1 : 0) - (keys.ArrowDown ? 1 : 0);
+  const turn = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+  updateVehiclePhysics(v, { fwd, turn }, dt);
+  player.x = v.x; player.y = v.y; player.a = v.a;         // a kamera a járművet követi
+}
+function onUse() { toggleVehicle(); }    // Task 8: előbb a ház-be/ki, ha ajtó közelében
 
 // ===== Rajzolás =====
 function worldToScreen(x, y) { return [x - player.x + W / 2, y - player.y + H / 2]; }
@@ -276,6 +306,7 @@ function frame(now) {
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;   // nagy ugrásokat levágjuk (háttérből visszatérés)
   last = now;
   updatePlayer(dt);
+  updateDriving(dt);
   updateNet(dt);
   draw();
   requestAnimationFrame(frame);
@@ -292,6 +323,7 @@ if (typeof global !== 'undefined') {
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     updateVehiclePhysics, VEH,
+    toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
