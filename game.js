@@ -111,7 +111,7 @@ function vehiclesIn(cx, cy, radius) {
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
-const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null };
+const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0 };
 const keys = Object.create(null);
 window.addEventListener('keydown', e => {
   if ((e.key === 'e' || e.key === 'E') && !keys._e) { keys._e = true; onUse(); }
@@ -178,7 +178,57 @@ function updateDriving(dt) {
   updateVehiclePhysics(v, { fwd, turn }, dt);
   player.x = v.x; player.y = v.y; player.a = v.a;         // a kamera a járművet követi
 }
-function onUse() { toggleVehicle(); }    // Task 8: előbb a ház-be/ki, ha ajtó közelében
+function nearestDoor(x, y, range) {
+  let best = null, bestD = range;
+  for (const h of housesIn(x, y, range * 2)) {
+    const d = Math.hypot(h.door.x - x, h.door.y - y);
+    if (d < bestD) { bestD = d; best = h; }
+  }
+  return best;
+}
+// belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
+function enterHouse(h) {
+  const rw = 300 + (h.seed % 160), rh = 220 + ((h.seed >> 8) % 140);
+  player.inHouse = { house: h, rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
+  player.ix = rw / 2; player.iy = rh - 40;               // a szobában, a kijárat közelében
+}
+function leaveHouse() {
+  const b = player.inHouse.back;
+  player.inHouse = null;
+  player.x = b.x; player.y = b.y + 18;                   // az ajtó elé, kifelé
+}
+function onUse() {
+  if (player.inHouse) {                                  // a kijárat közelében: kilépés
+    const ex = player.inHouse.exit;
+    if (Math.hypot(player.ix - ex.x, player.iy - ex.y) < 40) leaveHouse();
+    return;
+  }
+  if (player.riding) { toggleVehicle(); return; }        // járműből kiszállás
+  const h = nearestDoor(player.x, player.y, 40);
+  if (h) { enterHouse(h); return; }
+  toggleVehicle();                                       // különben jármű be-/felszállás
+}
+// mozgás a belső szobában (külön koordináták: player.ix, player.iy)
+function updateInterior(dt) {
+  if (!player.inHouse) return;
+  const r = player.inHouse;
+  let dx = 0, dy = 0;
+  if (keys.ArrowLeft) dx -= 1; if (keys.ArrowRight) dx += 1;
+  if (keys.ArrowUp) dy -= 1; if (keys.ArrowDown) dy += 1;
+  if (dx || dy) { const n = Math.hypot(dx, dy); player.ix += (dx / n) * 180 * dt; player.iy += (dy / n) * 180 * dt; }
+  player.ix = Math.max(16, Math.min(r.rw - 16, player.ix));   // a falakon belül
+  player.iy = Math.max(16, Math.min(r.rh - 16, player.iy));
+}
+function drawInterior() {
+  const r = player.inHouse;
+  ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
+  const ox = W / 2 - r.rw / 2, oy = H / 2 - r.rh / 2;         // a szoba középre
+  ctx.fillStyle = '#4b3f36'; ctx.fillRect(ox, oy, r.rw, r.rh);
+  ctx.fillStyle = '#caa36f'; ctx.fillRect(ox + r.exit.x - 16, oy + r.exit.y - 6, 32, 12);   // kijárat
+  ctx.fillStyle = player.color; ctx.fillRect(ox + player.ix - 10, oy + player.iy - 10, 20, 20);
+  ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Házban vagy – menj a kijárathoz és nyomd meg az E-t', 12, 24);
+}
 
 // ===== Rajzolás =====
 function worldToScreen(x, y) { return [x - player.x + W / 2, y - player.y + H / 2]; }
@@ -227,6 +277,7 @@ function drawPlayer(x, y, a, color, name) {
 }
 
 function draw() {
+  if (player.inHouse) { drawInterior(); return; }
   ctx.fillStyle = '#0d1b2a';
   ctx.fillRect(0, 0, W, H);
   drawCity();
@@ -305,8 +356,8 @@ let last = 0;
 function frame(now) {
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;   // nagy ugrásokat levágjuk (háttérből visszatérés)
   last = now;
-  updatePlayer(dt);
-  updateDriving(dt);
+  if (player.inHouse) updateInterior(dt);
+  else { updatePlayer(dt); updateDriving(dt); }
   updateNet(dt);
   draw();
   requestAnimationFrame(frame);
@@ -324,6 +375,7 @@ if (typeof global !== 'undefined') {
     vehiclesIn, vehiclesInCell,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
+    enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }

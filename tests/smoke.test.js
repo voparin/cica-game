@@ -96,6 +96,20 @@ check('a közeli járműbe beszáll, majd kiszáll', (() => {
 check('messziről nincs beszállás', (() => {
   G.player.riding = null; G.player.x = 1e6; G.player.y = 1e6; G.toggleVehicle(); return !G.player.riding;
 })());
+
+// --- Házba belépés ---
+check('ajtónál E-re bemegy, majd a kijáraton kijön az ajtó elé', (() => {
+  G.player.riding = null; G.player.inHouse = null;
+  const h = G.housesIn(0, 0, 1800)[0];
+  G.player.x = h.door.x; G.player.y = h.door.y;
+  G.onUse();                                              // belépés
+  const inside = !!G.player.inHouse && G.player.inHouse.house.x === h.x && G.player.inHouse.house.y === h.y;
+  // a belső szoba kijáratához megyünk, és E-vel kilépünk
+  G.player.ix = G.player.inHouse.exit.x; G.player.iy = G.player.inHouse.exit.y;
+  G.onUse();
+  const outside = !G.player.inHouse && Math.hypot(G.player.x - h.door.x, G.player.y - h.door.y) < 40;
+  return inside && outside;
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 
