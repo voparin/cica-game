@@ -66,6 +66,19 @@ check('a ház ajtaja a házon kívül, az út felé esik', (() => {
   return h.door && Math.hypot(h.door.x - h.x, h.door.y - h.y) > h.w / 2;
 })());
 
+// --- Házak vizuális mezői ---
+check('a ház falszíne és tetőszíne a palettából való', (() => {
+  const h = G.housesIn(0, 0, 2400)[0];
+  return G.HOUSE_WALLS.includes(h.wall) && G.HOUSE_ROOFS.includes(h.roof);
+})());
+check('a tetőtípus a három érték egyike, a magasság pozitív', (() => {
+  return G.housesIn(0, 0, 3000).every(h => ['nyereg', 'sator', 'lapos'].includes(h.roofType) && h.height > 0);
+})());
+check('a vizuális mezők determinisztikusak (ugyanaz a ház → ugyanaz a szín)', (() => {
+  const a = G.housesIn(0, 0, 2400)[0], b = G.housesIn(0, 0, 2400)[0];
+  return a.wall === b.wall && a.roofType === b.roofType && a.height === b.height;
+})());
+
 // --- Ütközés a házakkal ---
 check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
   const p = { x: 5, y: 1 };                 // egy 0,0 középpontú 20x20 téglalap belsejében
