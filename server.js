@@ -24,6 +24,7 @@ function cleanState(s) {
     name: str(s.name, 16) || 'Játékos', x: num(s.x, -1e7, 1e7), y: num(s.y, -1e7, 1e7), a: num(s.a, -10, 10),
     car: !!s.car, len: num(s.len, 10, 200), wid: num(s.wid, 8, 120), c0: str(s.c0, 9), c1: str(s.c1, 9), kind: str(s.kind, 12),
     shirt: str(s.shirt, 9), head: str(s.head, 9), legs: str(s.legs, 9), hat: str(s.hat, 9), hp: num(s.hp, 0, 100), dead: !!s.dead,
+    hold: str(s.hold, 12), bed: !!s.bed,
   };
 }
 

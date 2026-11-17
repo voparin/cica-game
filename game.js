@@ -681,12 +681,12 @@ const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries
 function netState() {                                 // amit a többiek látnak belőlünk
   if (player.inHouse) {                                // házban: a többiek az ajtónál állva látnak
     const b = player.inHouse.back;
-    return { name: player.name, x: Math.round(b.x), y: Math.round(b.y), a: 0, car: false, kind: '', shirt: player.color };
+    return { name: player.name, x: Math.round(b.x), y: Math.round(b.y), a: 0, car: false, kind: '', shirt: player.color, hold: player.holding || '', bed: !!player.inBed };
   }
   const riding = player.riding;
   return {
     name: player.name, x: Math.round(player.x), y: Math.round(player.y), a: player.a,
-    car: !!riding, kind: riding ? riding.kind : '', shirt: player.color,
+    car: !!riding, kind: riding ? riding.kind : '', shirt: player.color, hold: player.holding || '', bed: false,
   };
 }
 
@@ -722,7 +722,7 @@ function netReceive(text) {                           // a szerver üzenetei: he
       if (!p || p.id === net.id) continue;            // magunkat nem rajzoljuk kétszer
       seen.add(p.id);
       const o = net.others.get(p.id) || {};
-      o.x = p.x; o.y = p.y; o.a = p.a; o.name = p.name; o.color = p.shirt; o.car = p.car; o.kind = p.kind;
+      o.x = p.x; o.y = p.y; o.a = p.a; o.name = p.name; o.color = p.shirt; o.car = p.car; o.kind = p.kind; o.hold = p.hold; o.bed = p.bed;
       net.others.set(p.id, o);
     }
     for (const id of net.others.keys()) if (!seen.has(id)) net.others.delete(id);   // kilépettek

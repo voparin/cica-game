@@ -291,6 +291,11 @@ check('netState járműben a car/kind mezőt küldi', (() => {
   G.player.riding = null;
   return s.car === true && s.kind === 'auto';
 })());
+check('netState a hold és bed mezőt is küldi', (() => {
+  G.player.inHouse = null; G.player.riding = null; G.player.holding = 'konyv'; G.player.inBed = false;
+  const s = G.netState(); G.player.holding = '';
+  return s.hold === 'konyv' && s.bed === false;
+})());
 check('netState házban a bejárati ajtó pozícióját küldi (nem a belső koordinátát)', (() => {
   const h = G.housesIn(0, 0, 1800)[0];
   G.enterHouse(h);

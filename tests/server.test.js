@@ -54,6 +54,10 @@ const until = async (cond, ms = 3000) => { const end = Date.now() + ms; while (D
   const seenByA = a.last && a.last.find(p => p.id === b.id), seenByB = b.last && b.last.find(p => p.id === a.id);
   check('a játékosok látják egymás helyzetét és kinézetét', !!seenByA && seenByA.x === 5000 && seenByA.car === true && !!seenByB && seenByB.shirt === '#2f6fd0');
   check('fiók nélkül a név „Vendég” (a kliens nem adhatja ki magát másnak)', seenByA.name === 'Vendég ' + b.id && seenByB.name === 'Vendég ' + a.id);
+  a.ws.send(JSON.stringify({ t: 'state', s: { name: 'Anna', x: 100, y: 200, a: 1, hold: 'maci', bed: true } }));
+  await until(() => { const s = b.last && b.last.find(p => p.id === a.id); return s && s.hold === 'maci'; });
+  const sab = b.last.find(p => p.id === a.id);
+  check('a kézben tartott tárgy és az alvás átmegy a szerveren (hold, bed)', sab.hold === 'maci' && sab.bed === true);
   a.ws.send('nem json'); a.ws.send(JSON.stringify({ t: 'state', s: { name: 'Anna', x: 150, y: 200 } }));
   await until(() => b.last && b.last.find(p => p.id === a.id && p.x === 150));
   check('a hibás üzenetet kihagyja, a mozgást továbbítja', !!(b.last && b.last.find(p => p.id === a.id && p.x === 150)));
