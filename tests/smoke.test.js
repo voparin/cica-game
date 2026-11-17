@@ -121,6 +121,16 @@ check('doorSide az ajtó oldalát adja a négy érték egyikeként, a h.door hel
   const right = G.doorSide({ ...base, door: { x: 66, y: 0 } });
   return top === 'ny' && bottom === 'py' && left === 'nx' && right === 'px';
 })());
+check('doorQuad a fal síkjában fekszik (a py falnál minden sarok y = cy+hh)', (() => {
+  const h = { x: 0, y: 0, w: 100, h: 100, height: 40, door: { x: 0, y: 66 } };
+  const q = G.doorQuad(h, 'py');                       // 4 világ-sarok [x,y,z]
+  return q.length === 4 && q.every(p => Math.abs(p[1] - 50) < 1e-6) && q.some(p => p[2] > 0) && q.some(p => p[2] === 0);
+})());
+check('doorQuad a px falnál minden sarok x = cx+hw', (() => {
+  const h = { x: 0, y: 0, w: 100, h: 100, height: 40, door: { x: 66, y: 0 } };
+  const q = G.doorQuad(h, 'px');
+  return q.length === 4 && q.every(p => Math.abs(p[0] - 50) < 1e-6);
+})());
 
 // --- Ütközés a házakkal ---
 check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
