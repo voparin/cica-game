@@ -429,31 +429,36 @@ function houseSign(type) {
   }
 }
 
+// az izometrikus kamera a -x,-y felől néz: a két kamera felőli oldalfal a 'nx' (x = cx-hw)
+// és 'ny' (y = cy-hh). Hátulról előre: előbb 'ny', majd 'nx' (az nx van közelebb a kamerához).
+function visibleWalls() { return ['ny', 'nx']; }
+
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
-  // oldalfalak (eltérő árnyalattal, hogy legyen mélység)
-  fillIsoPoly([[h.x - hw, h.y - hh, 0], [h.x - hw, h.y + hh, 0], [h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z]], shade(h.wall, 0.28));
-  fillIsoPoly([[h.x - hw, h.y + hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], shade(h.wall, 0.12));
-  fillIsoPoly([[h.x + hw, h.y - hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x + hw, h.y - hh, z]], shade(h.wall, 0.2));
-  fillIsoPoly([[h.x - hw, h.y - hh, 0], [h.x + hw, h.y - hh, 0], [h.x + hw, h.y - hh, z], [h.x - hw, h.y - hh, z]], h.wall);
+  const poly = (pts, fill, line) => { fillIsoPoly(pts, fill); if (line) { ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.stroke(); } };
+  // csak a két kamera felőli oldalfal (hátulról előre: ny, majd nx) – így nem átlátszó
+  // ny fal (y = cy-hh)
+  poly([[h.x - hw, h.y - hh, 0], [h.x + hw, h.y - hh, 0], [h.x + hw, h.y - hh, z], [h.x - hw, h.y - hh, z]], h.wall, '#1b1410');
+  // nx fal (x = cx-hw)
+  poly([[h.x - hw, h.y - hh, 0], [h.x - hw, h.y + hh, 0], [h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z]], shade(h.wall, 0.22), '#1b1410');
   // tető
   if (h.roofType === 'lapos') {
-    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.roof);
+    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.roof, '#1b1410');
   } else if (h.roofType === 'sator') {
-    const peak = z + 26;
-    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, peak]], h.roof);
-    fillIsoPoly([[h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, peak]], shade(h.roof, 0.15));
-    fillIsoPoly([[h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z], [h.x, h.y, peak]], shade(h.roof, 0.28));
-    fillIsoPoly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z], [h.x, h.y, peak]], shade(h.roof, 0.2));
-  } else {                                            // nyereg: gerinc a hosszabb tengely mentén
-    const peak = z + 22;
-    fillIsoPoly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, peak], [h.x - hw, h.y, peak]], h.roof);
-    fillIsoPoly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x + hw, h.y, peak], [h.x - hw, h.y, peak]], shade(h.roof, 0.22));
+    const pk = z + 26;
+    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, pk]], h.roof, '#1b1410');
+    poly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z], [h.x, h.y, pk]], shade(h.roof, 0.2), '#1b1410');
+  } else {
+    const pk = z + 22;
+    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], h.roof, '#1b1410');
+    poly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y, pk], [h.x - hw, h.y - hh, z]], shade(h.roof, 0.2), '#1b1410');
   }
-  // ajtó a front falon (a kamera felőli, világos oldalon)
-  const [dx, dy] = worldToScreen(h.x, h.y - hh, Math.min(20, z * 0.5));
-  ctx.fillStyle = '#3a2d22'; ctx.fillRect(dx - 5, dy - 10, 10, 12);
-  const sign = houseSign(h.type);                    // a speciális házakon kis tábla az ajtó fölött
+  // NAGY, egyértelmű ajtó a front (ny) falon
+  const [dx, dy] = worldToScreen(h.x, h.y - hh, 0);
+  ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx - 15, dy - 40, 30, 40);        // világos keret
+  ctx.fillStyle = '#4a2f1c'; ctx.fillRect(dx - 11, dy - 36, 22, 36);        // ajtólap
+  ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx + 4, dy - 20, 3, 3);           // kilincs
+  const sign = houseSign(h.type);
   if (sign) {
     const [lx, ly] = worldToScreen(h.x, h.y - hh, z + 6);
     ctx.fillStyle = sign.color; ctx.fillRect(lx - 14, ly - 12, 28, 14);
@@ -661,7 +666,7 @@ if (typeof global !== 'undefined') {
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
-    streetStyle, drawStreets, drawHouse, fillIsoPoly,
+    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }

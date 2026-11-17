@@ -108,6 +108,12 @@ check('minden speciális típushoz van jel, a lakóházhoz nincs', (() => {
   return special.every(t => { const s = G.houseSign(t); return s && s.label && s.color; }) && G.houseSign('lakohaz') === null;
 })());
 
+// --- Házrajz (tömör, nem átlátszó) ---
+check('visibleWalls a két kamera felőli falat adja (a -x és -y irányút)', (() => {
+  const walls = G.visibleWalls();     // oldalak nevei, hátulról előre
+  return Array.isArray(walls) && walls.length === 2 && walls.includes('nx') && walls.includes('ny');
+})());
+
 // --- Ütközés a házakkal ---
 check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
   const p = { x: 5, y: 1 };                 // egy 0,0 középpontú 20x20 téglalap belsejében
