@@ -1,4 +1,4 @@
-# Szofi – többjátékos szerver a Google Cloud Runon. Függőség nélkül: csak a Node és a három fájl.
+# Cica game – többjátékos szerver a Google Cloud Runon. Függőség nélkül: csak a Node és a három fájl.
 FROM node:22-slim
 WORKDIR /app
 COPY server.js index.html game.js ./

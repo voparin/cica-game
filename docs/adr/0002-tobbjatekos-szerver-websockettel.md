@@ -4,7 +4,7 @@
 - **Dátum:** 2026-11-17
 
 ## Kontextus
-A Szofiban több játékos lássa egymást valós időben. A játék tiszta HTML/JS,
+A Cica game-ben több játékos lássa egymást valós időben. A játék tiszta HTML/JS,
 build és függőség nélkül (ADR-0001) – a szerverre is ugyanez a követelmény.
 A megoldás a `gta-game` bevált szervere, változtatás nélkül átemelve.
 
@@ -40,5 +40,5 @@ A szervert a `tests/server.test.js` két valódi WebSocket-klienssel teszteli
 - (+) Egyetlen fájl, nulla függőség; a Cloud Runon alvó üzemmódban olcsón fut.
 - (+) A szerver a tekintélyes forrás: a kliens adatait szűri, a nevet a fiók adja.
 - (−) Az RFC 6455 keretkezelést és a token-ellenőrzést magunknak kell karbantartani.
-- Felhős üzemeltetés: külön `szofi-game` Google Cloud projekt/szolgáltatás
+- Felhős üzemeltetés: külön `cica-game` Google Cloud projekt/szolgáltatás
   (elkülönített Firestore), lásd a CLAUDE.md telepítési szakaszát.

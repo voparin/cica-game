@@ -1,11 +1,11 @@
-# Szofi – fejlesztési útmutató
+# Cica game – fejlesztési útmutató
 
 Felülnézetes, GTA-szerű böngészős játék (induló váz). Tiszta HTML + JavaScript
 (Canvas 2D), nincs build lépés és nincs függőség. A `gta-game` bevált mintáját
 követi.
 
-- Repó: https://github.com/voparin/szofi-game
-- Élő játék (publikálás után): https://voparin.github.io/szofi-game/
+- Repó: https://github.com/voparin/cica-game
+- Élő játék (publikálás után): https://voparin.github.io/cica-game/
 
 ## Felépítés
 
@@ -14,7 +14,7 @@ követi.
 | `index.html` | betölti a canvas-t és a `game.js`-t |
 | `game.js` | a játék: 2.5D izometrikus város (utcák, színes tetős házak), ember/autó/ló szereplők, `E`-s interakció (ADR-0001, 0003–0008) |
 | `server.js` | többjátékos szerver (ADR-0002): kiszolgálja a játékot, `/ws` – a játékosok helyzete; fiókok, Google-belépés, PvP; függőség nélkül |
-| `Dockerfile`, `.gcloudignore` | a szerver a Google Cloud Runra (külön `szofi-game` projekt) |
+| `Dockerfile`, `.gcloudignore` | a szerver a Google Cloud Runra (külön `cica-game` projekt) |
 | `tests/smoke.test.js` | füstteszt kamu böngészőkörnyezetben (Node, függőség nélkül) |
 | `tests/server.test.js` | a szerver tesztje két valódi WebSocket-klienssel (Node 22+) |
 | `.github/workflows/deploy.yml` | CI: teszt, majd publikálás GitHub Pages-re |
@@ -97,20 +97,20 @@ döntésnél másold a `docs/adr/template.md`-t a következő sorszámmal, és v
 
 ### 1. GitHub-repó és automatikus publikálás (GitHub Pages)
 
-1. Hozz létre egy új, üres repót: `voparin/szofi-game` (nyilvános).
+1. Hozz létre egy új, üres repót: `voparin/cica-game` (nyilvános).
 2. A helyi mappában (`git init` már megvan):
    ```
-   git remote add origin https://github.com/voparin/szofi-game.git
+   git remote add origin https://github.com/voparin/cica-game.git
    git push -u origin main
    ```
 3. A repó **Settings → Pages** oldalán a *Source* legyen **GitHub Actions**.
 4. A `main`-re tolás elindítja a `deploy.yml`-t: előbb teszt, majd publikálás.
-   A kész játék: `https://voparin.github.io/szofi-game/`.
+   A kész játék: `https://voparin.github.io/cica-game/`.
 
 A `deploy.yml` a `game.js`-t `?v=<commit>` címkével tölti be, hogy a böngésző ne
 a régi, tárolt változatot futtassa.
 
-### 2. Többjátékos szerver a Google Cloud Runon (külön `szofi-game` projekt)
+### 2. Többjátékos szerver a Google Cloud Runon (külön `cica-game` projekt)
 
 A GitHub Pages statikus: önmagában nincs szerver, így alapból egyjátékos. A
 többjátékos módhoz a `server.js` a Google Cloud Runon fut, és a kliens a
@@ -120,8 +120,8 @@ Egyszeri beállítás (`gcloud` CLI kell, belépve: `gcloud auth login`):
 
 ```
 # 1) új, elkülönített projekt (a gta-game-től független Firestore-ral)
-gcloud projects create szofi-game
-gcloud config set project szofi-game
+gcloud projects create cica-game
+gcloud config set project cica-game
 # (számlázás bekapcsolása a projekthez a Cloud konzolon)
 
 # 2) a szükséges API-k
@@ -132,15 +132,15 @@ gcloud services enable run.googleapis.com firestore.googleapis.com \
 gcloud firestore databases create --location=europe-west1
 
 # 4) a szerver kiadása (a mappából, forrásból építve)
-gcloud run deploy szofi-game --source . --region europe-west1 \
-  --project szofi-game --allow-unauthenticated --quiet
+gcloud run deploy cica-game --source . --region europe-west1 \
+  --project cica-game --allow-unauthenticated --quiet
 ```
 
 A `gcloud run deploy` a végén kiír egy címet, pl.
-`https://szofi-game-XXXXXXXX.europe-west1.run.app`. Ezt két helyen használd:
+`https://cica-game-XXXXXXXX.europe-west1.run.app`. Ezt két helyen használd:
 
 - **`game.js` → `NET_SERVER`**: a `wss://` változata (pl.
-  `wss://szofi-game-XXXXXXXX.europe-west1.run.app`), hogy a GitHub Pages-en is
+  `wss://cica-game-XXXXXXXX.europe-west1.run.app`), hogy a GitHub Pages-en is
   legyen többjátékos mód. Commit + push → a Pages frissül.
 - A szerver `ALLOWED_ORIGINS` alapértéke `https://voparin.github.io`, ami a
   Pages-címünk – így külön beállítás nélkül jó. Ha máshonnan is engednéd a

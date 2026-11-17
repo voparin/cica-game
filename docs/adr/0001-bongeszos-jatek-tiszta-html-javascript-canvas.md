@@ -4,7 +4,7 @@
 - **Dátum:** 2026-11-17
 
 ## Kontextus
-A Szofi egy felülnézetes, GTA-szerű böngészős játéknak indul, hobbiprojektként.
+A Cica game egy felülnézetes, GTA-szerű böngészős játéknak indul, hobbiprojektként.
 A cél a gyors, telepítés nélküli kipróbálhatóság, a már bevált `gta-game` mintáját
 követve.
 

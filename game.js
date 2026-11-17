@@ -1,7 +1,7 @@
 'use strict';
-// Szofi – minimális játék-csonk (ADR-0001). Tiszta Canvas 2D, nincs build, nincs függőség.
+// Cica game – minimális játék-csonk (ADR-0001). Tiszta Canvas 2D, nincs build, nincs függőség.
 // Ez még nem a kész játék: egy nyilakkal mozgatható játékos-négyzet, és a többi játékos
-// kirajzolása a szerverről (ADR-0002). Erre a vázra épül majd a tényleges Szofi-játék.
+// kirajzolása a szerverről (ADR-0002). Erre a vázra épül majd a tényleges Cica game.
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -725,7 +725,7 @@ function draw() {
 // { t:'hello', id } és { t:'players', list:[...] }.
 const NET_SEND = 0.1;                                 // ennyi időnként küldjük a helyzetünket (mp)
 // A felhős (Cloud Run) szerver címe – az első „gcloud run deploy” után töltsd ki a kapott
-// wss://szofi-game-….run.app címmel, hogy a GitHub Pages-en is legyen többjátékos mód.
+// wss://cica-game-….run.app címmel, hogy a GitHub Pages-en is legyen többjátékos mód.
 const NET_SERVER = '';
 const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries: 0 };
 

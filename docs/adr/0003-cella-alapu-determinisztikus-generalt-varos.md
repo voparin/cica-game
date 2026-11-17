@@ -4,7 +4,7 @@
 - **Dátum:** 2026-11-17
 
 ## Kontextus
-A Szofi végtelen várost kér: a játékos bármeddig mehet. Nem tárolhatunk egy
+A Cica game végtelen várost kér: a játékos bármeddig mehet. Nem tárolhatunk egy
 végtelen pályát, és világbejárás sem fér bele (lassú lenne, és nincs „egész
 pálya"). A gta-game bevált mintája: mindent képletből, pozíció-alapú hashből.
 

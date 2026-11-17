@@ -107,6 +107,6 @@ A projekt váza létrehozva (a `gta-game` mintájára, függőség nélkül, bui
 - `tests/smoke.test.js`: füstteszt a csonkhoz (kamu böngészőkörnyezet, Node).
 - `tests/server.test.js`: a szerver tesztje két valódi WebSocket-klienssel.
 - `.github/workflows/deploy.yml`: CI – teszt, majd publikálás GitHub Pages-re.
-- `Dockerfile`, `.gcloudignore`: a szerver a Google Cloud Runra (külön `szofi-game`
+- `Dockerfile`, `.gcloudignore`: a szerver a Google Cloud Runra (külön `cica-game`
   projekt).
 - `docs/adr/`: architekturális döntések naplója.
