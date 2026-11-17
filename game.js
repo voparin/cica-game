@@ -281,7 +281,18 @@ function draw() {
   ctx.fillStyle = '#0d1b2a';
   ctx.fillRect(0, 0, W, H);
   drawCity();
-  for (const o of net.others.values()) drawPlayer(o.x, o.y, o.a, o.color || '#d42020', o.name);
+  for (const o of net.others.values()) {
+    if (o.car) {
+      const [sx, sy] = worldToScreen(o.x, o.y);
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(o.a);
+      ctx.fillStyle = o.kind === 'lo' ? '#8a5a2b' : (o.color || '#d42020');
+      if (o.kind === 'lo') ctx.fillRect(-16, -7, 32, 14); else ctx.fillRect(-20, -11, 40, 22);
+      ctx.restore();
+      if (o.name) { ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(o.name, sx, sy - 18); }
+    } else {
+      drawPlayer(o.x, o.y, o.a, o.color || '#d42020', o.name);
+    }
+  }
   drawPlayer(player.x, player.y, player.a, player.color, player.name);
   // HUD
   ctx.fillStyle = '#fff';
@@ -301,7 +312,15 @@ const NET_SERVER = '';
 const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries: 0 };
 
 function netState() {                                 // amit a többiek látnak belőlünk
-  return { name: player.name, x: Math.round(player.x), y: Math.round(player.y), a: player.a, shirt: player.color };
+  if (player.inHouse) {                                // házban: a többiek az ajtónál állva látnak
+    const b = player.inHouse.back;
+    return { name: player.name, x: Math.round(b.x), y: Math.round(b.y), a: 0, car: false, kind: '', shirt: player.color };
+  }
+  const riding = player.riding;
+  return {
+    name: player.name, x: Math.round(player.x), y: Math.round(player.y), a: player.a,
+    car: !!riding, kind: riding ? riding.kind : '', shirt: player.color,
+  };
 }
 
 function netConnect() {                               // a GitHub Pages-en (statikus oldal) nincs saját szerver
@@ -336,7 +355,7 @@ function netReceive(text) {                           // a szerver üzenetei: he
       if (!p || p.id === net.id) continue;            // magunkat nem rajzoljuk kétszer
       seen.add(p.id);
       const o = net.others.get(p.id) || {};
-      o.x = p.x; o.y = p.y; o.a = p.a; o.name = p.name; o.color = p.shirt;
+      o.x = p.x; o.y = p.y; o.a = p.a; o.name = p.name; o.color = p.shirt; o.car = p.car; o.kind = p.kind;
       net.others.set(p.id, o);
     }
     for (const id of net.others.keys()) if (!seen.has(id)) net.others.delete(id);   // kilépettek

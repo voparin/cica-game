@@ -110,6 +110,22 @@ check('ajtónál E-re bemegy, majd a kijáraton kijön az ajtó elé', (() => {
   const outside = !G.player.inHouse && Math.hypot(G.player.x - h.door.x, G.player.y - h.door.y) < 40;
   return inside && outside;
 })());
+
+// --- Többjátékos: jármű és házban lét ---
+check('netState járműben a car/kind mezőt küldi', (() => {
+  G.player.inHouse = null; G.player.riding = { x: 10, y: 20, a: 0.5, angle: 0.5, kind: 'auto' };
+  G.player.x = 10; G.player.y = 20;
+  const s = G.netState();
+  G.player.riding = null;
+  return s.car === true && s.kind === 'auto';
+})());
+check('netState házban a bejárati ajtó pozícióját küldi (nem a belső koordinátát)', (() => {
+  const h = G.housesIn(0, 0, 1800)[0];
+  G.enterHouse(h);
+  const s = G.netState();
+  G.leaveHouse();
+  return Math.abs(s.x - h.door.x) < 1 && Math.abs(s.y - h.door.y) < 1 && s.car === false;
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 
