@@ -252,6 +252,11 @@ check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.leaveHouse();
   return t === h.type;
 })());
+check('bedroomLayout az ágy/szekrény/tárgyak zónáit adja, a szobán belül', (() => {
+  const L = G.bedroomLayout(360, 260);
+  const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
+  return L.bed && L.wardrobe && Array.isArray(L.items) && L.items.length === 4 && inside(L.bed) && L.items.every(inside) && L.exit && inside(L.exit);
+})());
 check('drawBedroom létezik és a lakószoba nem dob hibát', (() => {
   G.player.riding = null; const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
   let ok = true; try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }
