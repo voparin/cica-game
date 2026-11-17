@@ -393,7 +393,14 @@ function drawInterior() {
     ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
   }
-  drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name);
+  if (player.inBed) {
+    const L = bedroomLayout(r.rw, r.rh);
+    drawPerson(ox + L.bed.x, oy + L.bed.y, 0, player.color, player.name, player.holding);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Zzz…', W / 2, H / 2);
+  } else {
+    drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name, player.holding);
+  }
   ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText('E: kijárat', 12, 24);
 }
@@ -444,18 +451,18 @@ function buildDrawList() {
     const key = depthKey(o.x, o.y);
     if (o.car) {                                         // jármű + a rajta ülő másik játékos
       list.push({ type: o.kind === 'lo' ? 'horse' : 'car', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', key });
-      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, rider: true });
+      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, rider: true, hold: o.hold || '' });
     } else {
-      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key });
+      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, hold: o.hold || '', bed: !!o.bed });
     }
   }
   const pkey = depthKey(player.x, player.y);
   if (player.riding) {                                   // a saját jármű + rajta mi magunk
     const vt = player.riding.kind === 'lo' ? 'horse' : 'car';
     list.push({ type: vt, wx: player.x, wy: player.y, a: player.a, color: player.riding.color, key: pkey, self: true });
-    list.push({ type: 'person', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, rider: true });
+    list.push({ type: 'person', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, rider: true, hold: player.holding });
   } else {
-    list.push({ type: 'player', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true });
+    list.push({ type: 'player', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, hold: player.holding });
   }
   list.sort((a, b) => a.key - b.key);
   return list;
@@ -551,8 +558,11 @@ function drawCity() {
     else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color);
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
-    else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name);   // a járművön ülő: feljebb, hogy kilátszódjon
-    else drawPerson(sx, sy, e.a, e.color, e.name);
+    else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name, e.hold);   // a járművön ülő: feljebb, hogy kilátszódjon
+    else {
+      drawPerson(sx, sy, e.a, e.color, e.name, e.hold);
+      if (e.bed) { ctx.fillStyle = '#cfe'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('alszik', sx, sy + 16); }
+    }
   }
 }
 
@@ -580,13 +590,15 @@ function nameTag(sx, sy, name) {
   ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(name, sx, sy - 34);
 }
 // ember: árnyék, fej, törzs (ruha = color); az irány enyhén jelezve
-function drawPerson(sx, sy, a, color, name) {
+function drawPerson(sx, sy, a, color, name, holding) {
   drawShadow(sx, sy, 10, 5);
   ctx.save(); ctx.translate(sx, sy);
   ctx.fillStyle = color || '#2f6fd0'; ctx.beginPath(); ctx.ellipse(0, -10, 7, 11, 0, 0, Math.PI * 2); ctx.fill();   // törzs/kabát
   ctx.fillStyle = '#e8c9a0'; ctx.beginPath(); ctx.arc(0, -22, 6, 0, Math.PI * 2); ctx.fill();                       // fej
   ctx.fillStyle = '#3a2d22'; ctx.fillRect(Math.cos(a) * 3 - 2, -24 + Math.sin(a) * 2, 4, 2);                        // nézési jelzés
-  ctx.restore(); nameTag(sx, sy, name);
+  ctx.restore();
+  if (holding) drawItem(sx + 12, sy - 8, holding);       // a kézben tartott tárgy
+  nameTag(sx, sy, name);
 }
 // egy jármű-lokális pontot (lx = menetirány, ly = oldal, lz = magasság) a képernyő-horgonyhoz
 // képez: a szöggel a VILÁGBAN forgat, majd izometriába vetít – így a jármű a talajon fekszik (nem dől)
