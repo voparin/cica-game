@@ -155,6 +155,38 @@ function vehiclesIn(cx, cy, radius) {
   return out;
 }
 
+// Fák a háztömbökben, determinisztikusan a seedből, az úttól és a házaktól távol.
+const TREE_R = 16;               // a törzs ütközési sugara
+function treesInBlock(gx, gy) {
+  const bx = gx * ROAD_SPACING, by = gy * ROAD_SPACING;
+  const out = [];
+  for (let i = 0; i < 3; i++) {                         // tömbönként pár fa
+    const rx = rand01(gx * 13 + i, gy * 13, 71), ry = rand01(gx * 13, gy * 13 + i, 72);
+    const x = bx + HOUSE_MARGIN + rx * (ROAD_SPACING - 2 * HOUSE_MARGIN);
+    const y = by + HOUSE_MARGIN + ry * (ROAD_SPACING - 2 * HOUSE_MARGIN);
+    if (onRoad(x, y)) continue;                          // ne az úton
+    out.push({ x, y, r: TREE_R, big: rand01(gx + i, gy, 73) > 0.5 });
+  }
+  return out;
+}
+function treesIn(cx, cy, radius) {
+  const out = [];
+  const g0x = Math.floor((cx - radius) / ROAD_SPACING), g1x = Math.floor((cx + radius) / ROAD_SPACING);
+  const g0y = Math.floor((cy - radius) / ROAD_SPACING), g1y = Math.floor((cy + radius) / ROAD_SPACING);
+  for (let gy = g0y; gy <= g1y; gy++) for (let gx = g0x; gx <= g1x; gx++)
+    for (const t of treesInBlock(gx, gy)) if (Math.hypot(t.x - cx, t.y - cy) <= radius) out.push(t);
+  return out;
+}
+function collideTrees(p, pad) {                          // kör-akadály: kitol a sugáron kívülre
+  for (const t of treesIn(p.x, p.y, ROAD_SPACING)) {
+    const dx = p.x - t.x, dy = p.y - t.y, d = Math.hypot(dx, dy), min = t.r + pad;
+    if (d < min) {                                       // belül (a középpontban is: adott irányba tolunk)
+      const ux = d > 0 ? dx / d : 1, uy = d > 0 ? dy / d : 0;
+      p.x = t.x + ux * min; p.y = t.y + uy * min;
+    }
+  }
+}
+
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
@@ -179,7 +211,7 @@ function updatePlayer(dt) {
     player.y += w.y * SPEED * dt;
     player.a = Math.atan2(w.y, w.x);
   }
-  if (!player.inHouse && !player.riding) collideHouses(player, 12);
+  if (!player.inHouse && !player.riding) { collideHouses(player, 12); collideTrees(player, 10); }
 }
 
 // ===== Közös járműfizika (autó + ló), irányított – ADR-0004 =====
@@ -199,6 +231,7 @@ function updateVehiclePhysics(v, input, dt) {
   v.y += Math.sin(v.angle) * v.speed * dt;
   v.a = v.angle;
   collideHouses(v, 14);
+  collideTrees(v, 12);
 }
 
 const ENTER_RANGE = 46;          // ennyin belül lehet be-/felszállni
@@ -658,6 +691,7 @@ if (typeof global !== 'undefined') {
     HOUSE_TYPES, houseType, houseSign,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
+    treesIn, treesInBlock, collideTrees, TREE_R,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,

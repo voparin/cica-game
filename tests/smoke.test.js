@@ -160,6 +160,18 @@ check('a járművek az úton vannak, és van köztük ló és autó is', (() => 
   return v.length > 0 && v.every(x => G.onRoad(x.x, x.y)) && v.some(x => x.kind === 'auto') && v.some(x => x.kind === 'lo');
 })());
 
+// --- Fák ---
+check('treesIn determinisztikus és a fák nincsenek az úton', (() => {
+  const a = G.treesIn(0, 0, 2000), b = G.treesIn(0, 0, 2000);
+  return a.length > 0 && a.length === b.length && a[0].x === b[0].x && a.every(t => !G.onRoad(t.x, t.y));
+})());
+check('collideTrees a fába lépő pontot kitolja', (() => {
+  const t = G.treesIn(0, 0, 2000)[0];
+  const p = { x: t.x, y: t.y };
+  G.collideTrees(p, 0);
+  return Math.hypot(p.x - t.x, p.y - t.y) > 0;
+})());
+
 // --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
 check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {
   const v0 = G.vehiclesIn(0, 0, 6000)[0];
