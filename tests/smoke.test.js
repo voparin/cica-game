@@ -43,6 +43,12 @@ check('ROAD_SPACING rácsán az út felismerhető', G.onRoad(0, 0) === true && G
 check('a háztömb közepén nincs út', G.onRoad(G.ROAD_SPACING / 2, G.ROAD_SPACING / 2) === false);
 check('nearestRoad a legközelebbi rácsvonalra tesz', (() => { const r = G.nearestRoad(G.ROAD_SPACING / 2 + 5, 123); return Math.abs(r.x - G.ROAD_SPACING) < 1e-6; })());
 
+// --- Izometrikus vetítés ---
+check('iso a sík pontját képernyő-eltolásra képezi (origó = 0,0)', (() => { const p = G.iso(0, 0, 0); return p.x === 0 && p.y === 0; })());
+check('iso a magasságot (z) felfelé tolja', (() => { const a = G.iso(100, 100, 0), b = G.iso(100, 100, 50); return b.y < a.y && b.x === a.x; })());
+check('iso +x és +y ellentétes vízszintes irányba visz (izometria)', (() => { const px = G.iso(100, 0, 0), py = G.iso(0, 100, 0); return Math.sign(px.x) !== Math.sign(py.x) && px.y > 0 && py.y > 0; })());
+check('worldToScreen a játékost a képernyő közepére teszi', (() => { const sx = G.player.x, sy = G.player.y; G.player.x = 500; G.player.y = -300; const s = G.worldToScreen(500, -300); G.player.x = sx; G.player.y = sy; return Math.abs(s[0] - G.W / 2) < 1 && Math.abs(s[1] - G.H / 2) < 1; })());
+
 // --- Világ: házak ---
 check('housesIn determinisztikus (ugyanaz a terület → ugyanaz a ház)', (() => {
   const a = G.housesIn(0, 0, 1200), b = G.housesIn(0, 0, 1200);

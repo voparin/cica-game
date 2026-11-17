@@ -231,7 +231,16 @@ function drawInterior() {
 }
 
 // ===== Rajzolás =====
-function worldToScreen(x, y) { return [x - player.x + W / 2, y - player.y + H / 2]; }
+// Izometrikus vetítés (ADR-0006): a világ (x,y) síkját 2:1 izo-ra képezi, a z felfelé tol.
+const ISO_X = 0.5, ISO_Y = 0.25;     // vízszintes / függőleges arány (2:1 izometria)
+function iso(wx, wy, wz = 0) {
+  return { x: (wx - wy) * ISO_X, y: (wx + wy) * ISO_Y - wz };
+}
+// a világpontot képernyő-koordinátára: a kamera a játékosra centrál (szintén izo)
+function worldToScreen(x, y, z = 0) {
+  const p = iso(x, y, z), c = iso(player.x, player.y, 0);
+  return [p.x - c.x + W / 2, p.y - c.y + H / 2];
+}
 
 function drawCity() {
   // háttér már kész (draw() tölti); most az utak
@@ -396,6 +405,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
+    iso, worldToScreen, ISO_X, ISO_Y,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
