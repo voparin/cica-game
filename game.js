@@ -131,6 +131,25 @@ function updatePlayer(dt) {
   if (!player.inHouse && !player.riding) collideHouses(player, 12);
 }
 
+// ===== Közös járműfizika (autó + ló), irányított – ADR-0004 =====
+const VEH = {
+  auto: { accel: 420, max: 520, turn: 2.6, friction: 1.4 },
+  lo:   { accel: 520, max: 380, turn: 3.4, friction: 2.2 },
+};
+// input: { fwd: -1..1 (gyorsít/fékez-hátramenet), turn: -1..1 (bal/jobb) }
+function updateVehiclePhysics(v, input, dt) {
+  const k = VEH[v.kind] || VEH.auto;
+  v.speed += input.fwd * k.accel * dt;
+  v.speed -= Math.sign(v.speed) * k.friction * dt * 60;          // súrlódás (bemenet nélkül is lassít)
+  if (Math.abs(v.speed) < 2 && input.fwd === 0) v.speed = 0;
+  v.speed = Math.max(-k.max * 0.4, Math.min(k.max, v.speed));    // hátramenet lassabb
+  if (Math.abs(v.speed) > 1) v.angle += input.turn * k.turn * dt * (v.speed >= 0 ? 1 : -1);
+  v.x += Math.cos(v.angle) * v.speed * dt;
+  v.y += Math.sin(v.angle) * v.speed * dt;
+  v.a = v.angle;
+  collideHouses(v, 14);
+}
+
 // ===== Rajzolás =====
 function worldToScreen(x, y) { return [x - player.x + W / 2, y - player.y + H / 2]; }
 
@@ -272,6 +291,7 @@ if (typeof global !== 'undefined') {
     housesIn, housesInBlock, HOUSE_MARGIN,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
+    updateVehiclePhysics, VEH,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
