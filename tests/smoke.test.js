@@ -93,6 +93,19 @@ check('collideHouses a házba lépő pontot kitolja', (() => {
 })());
 check('a drawCity függvény létezik', typeof G.drawCity === 'function');
 
+// --- Mélység szerinti rajzolás ---
+check('depthKey monoton: a kamerától távolabbi (kisebb x+y) kisebb kulcsot ad', (() => {
+  return G.depthKey(0, 0) < G.depthKey(100, 100);
+})());
+check('buildDrawList a játékost és a közeli házakat tartalmazza, y szerint rendezve', (() => {
+  G.player.inHouse = null; G.player.riding = null; G.player.x = 0; G.player.y = 0;
+  const list = G.buildDrawList();
+  const hasPlayer = list.some(e => e.type === 'player');
+  const hasHouse = list.some(e => e.type === 'house');
+  let sorted = true; for (let i = 1; i < list.length; i++) if (list[i].key < list[i - 1].key) sorted = false;
+  return hasPlayer && hasHouse && sorted;
+})());
+
 // --- Járművek a világban ---
 check('vehiclesIn determinisztikus', (() => {
   const a = G.vehiclesIn(0, 0, 1800), b = G.vehiclesIn(0, 0, 1800);

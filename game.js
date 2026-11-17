@@ -263,6 +263,27 @@ function screenToWorldDir(dx, dy) {
   return { x: wx / n, y: wy / n };
 }
 
+// mélység-kulcs a takaráshoz: a vetített y (wx+wy) szerint – kisebb = távolabb = előbb rajzolva
+function depthKey(wx, wy) { return (wx + wy) * ISO_Y; }
+// a kamera körüli rajzolandók listája (ház/jármű/másik/saját), mélység szerint rendezve
+function buildDrawList() {
+  const R = (Math.hypot(W, H)) / (2 * ISO_Y) + ROAD_SPACING;   // izo-látótér sugara világban
+  const list = [];
+  for (const h of housesIn(player.x, player.y, R)) list.push({ type: 'house', wx: h.x, wy: h.y, key: depthKey(h.x, h.y), h });
+  for (const v of vehiclesIn(player.x, player.y, R)) {
+    if (player.riding && player.riding.id === v.id) continue;
+    list.push({ type: v.kind === 'lo' ? 'horse' : 'car', wx: v.x, wy: v.y, a: v.a, color: v.color, key: depthKey(v.x, v.y) });
+  }
+  for (const o of net.others.values()) {
+    const type = o.car ? (o.kind === 'lo' ? 'horse' : 'car') : 'person';
+    list.push({ type, wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key: depthKey(o.x, o.y) });
+  }
+  const pt = player.riding ? (player.riding.kind === 'lo' ? 'horse' : 'car') : 'player';
+  list.push({ type: pt, wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: depthKey(player.x, player.y), self: true });
+  list.sort((a, b) => a.key - b.key);
+  return list;
+}
+
 function drawCity() {
   // háttér már kész (draw() tölti); most az utak
   const left = player.x - W / 2, top = player.y - H / 2;
@@ -428,6 +449,7 @@ if (typeof global !== 'undefined') {
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir,
+    depthKey, buildDrawList,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
