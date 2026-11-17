@@ -371,6 +371,18 @@ function drawStreets() {
 }
 
 // egy ház kirajzolása izometrikusan: látható oldalfalak + tető a típus szerint
+// típusonkénti jel (az ajtó fölötti kis tábla): rövid címke + szín; a lakóházhoz nincs
+function houseSign(type) {
+  switch (type) {
+    case 'gyar': return { label: 'GY', color: '#8a8f98' };
+    case 'iskola': return { label: 'IS', color: '#e0b43a' };
+    case 'iroda': return { label: 'IR', color: '#5b7fa6' };
+    case 'bolt': return { label: 'BOLT', color: '#3f9e5e' };
+    case 'etterem': return { label: 'ÉT', color: '#c7563f' };
+    default: return null;                            // lakóház: nincs jel
+  }
+}
+
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
   // oldalfalak (eltérő árnyalattal, hogy legyen mélység)
@@ -395,6 +407,13 @@ function drawHouse(h) {
   // ajtó a front falon (a kamera felőli, világos oldalon)
   const [dx, dy] = worldToScreen(h.x, h.y - hh, Math.min(20, z * 0.5));
   ctx.fillStyle = '#3a2d22'; ctx.fillRect(dx - 5, dy - 10, 10, 12);
+  const sign = houseSign(h.type);                    // a speciális házakon kis tábla az ajtó fölött
+  if (sign) {
+    const [lx, ly] = worldToScreen(h.x, h.y - hh, z + 6);
+    ctx.fillStyle = sign.color; ctx.fillRect(lx - 14, ly - 12, 28, 14);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(sign.label, lx, ly - 5); ctx.textBaseline = 'alphabetic';
+  }
 }
 
 function drawCity() {
@@ -585,7 +604,7 @@ if (typeof global !== 'undefined') {
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,
-    HOUSE_TYPES, houseType,
+    HOUSE_TYPES, houseType, houseSign,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,

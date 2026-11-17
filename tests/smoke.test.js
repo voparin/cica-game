@@ -99,6 +99,14 @@ check('a lakóház a leggyakoribb típus', (() => {
 check('minden háznak van type mezője (a hat érték egyike)', (() => {
   return G.housesIn(0, 0, 3000).every(h => ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'].includes(h.type));
 })());
+check('houseSign a típushoz címkét és színt ad', (() => {
+  const s = G.houseSign('gyar');
+  return s && typeof s.label === 'string' && s.label.length >= 1 && typeof s.color === 'string';
+})());
+check('minden speciális típushoz van jel, a lakóházhoz nincs', (() => {
+  const special = ['gyar', 'iskola', 'iroda', 'bolt', 'etterem'];
+  return special.every(t => { const s = G.houseSign(t); return s && s.label && s.color; }) && G.houseSign('lakohaz') === null;
+})());
 
 // --- Ütközés a házakkal ---
 check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
