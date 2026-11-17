@@ -374,26 +374,26 @@ function drawPerson(sx, sy, a, color, name) {
   ctx.fillStyle = '#3a2d22'; ctx.fillRect(Math.cos(a) * 3 - 2, -24 + Math.sin(a) * 2, 4, 2);                        // nézési jelzés
   ctx.restore(); nameTag(sx, sy, name);
 }
-// autó: árnyék, karosszéria, szélvédő, 4 kerék, fényszóró; az a szög szerint forgatva
+// autó: árnyék, karosszéria, szélvédő, 4 kerék, fényszóró; az izo-szög szerint forgatva
 function drawCarSprite(sx, sy, a, color, name) {
-  drawShadow(sx, sy, 22, 9);
-  ctx.save(); ctx.translate(sx, sy - 6); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);   // izo-irány + lapítás
-  ctx.fillStyle = '#111'; for (const [wx, wy] of [[-13, -11], [13, -11], [-13, 11], [13, 11]]) ctx.fillRect(wx - 3, wy - 3, 6, 6);
-  ctx.fillStyle = color || '#d42020'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-20, -11, 40, 22, 5) : ctx.rect(-20, -11, 40, 22); ctx.fill();
-  ctx.fillStyle = '#bfe0ff'; ctx.fillRect(4, -8, 10, 16);                     // szélvédő
-  ctx.fillStyle = '#fff'; ctx.fillRect(18, -8, 3, 4); ctx.fillRect(18, 4, 3, 4);  // fényszóró
+  drawShadow(sx, sy, 34, 15);
+  ctx.save(); ctx.translate(sx, sy - 9); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);   // izo-irány + lapítás
+  ctx.fillStyle = '#111'; for (const [wx, wy] of [[-20, -17], [20, -17], [-20, 17], [20, 17]]) ctx.fillRect(wx - 5, wy - 5, 10, 10);
+  ctx.fillStyle = color || '#d42020'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-30, -17, 60, 34, 8) : ctx.rect(-30, -17, 60, 34); ctx.fill();
+  ctx.fillStyle = '#bfe0ff'; ctx.fillRect(6, -12, 15, 24);                    // szélvédő
+  ctx.fillStyle = '#fff'; ctx.fillRect(27, -12, 4, 6); ctx.fillRect(27, 6, 4, 6);  // fényszóró
   ctx.restore(); nameTag(sx, sy, name);
 }
-// ló: árnyék, test, nyak+fej, 4 láb, farok; az a szög szerint forgatva
+// ló: árnyék, test, nyak+fej, 4 láb, farok; az izo-szög szerint forgatva
 function drawHorseSprite(sx, sy, a, color, name) {
-  drawShadow(sx, sy, 18, 8);
-  ctx.save(); ctx.translate(sx, sy - 5); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);
-  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 3;
-  ctx.beginPath(); for (const lx of [-10, -4, 6, 12]) { ctx.moveTo(lx, 4); ctx.lineTo(lx, 12); } ctx.stroke();   // lábak
-  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2); ctx.fill(); // test
-  ctx.beginPath(); ctx.ellipse(16, -6, 5, 3, -0.5, 0, Math.PI * 2); ctx.fill();                                 // fej
-  ctx.fillRect(10, -8, 4, 8);                                                                                    // nyak
-  ctx.strokeStyle = '#3a2d22'; ctx.beginPath(); ctx.moveTo(-16, -2); ctx.lineTo(-22, 4); ctx.stroke();          // farok
+  drawShadow(sx, sy, 28, 12);
+  ctx.save(); ctx.translate(sx, sy - 8); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);
+  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 4;
+  ctx.beginPath(); for (const lx of [-15, -6, 9, 18]) { ctx.moveTo(lx, 6); ctx.lineTo(lx, 18); } ctx.stroke();   // lábak
+  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 24, 11, 0, 0, Math.PI * 2); ctx.fill(); // test
+  ctx.beginPath(); ctx.ellipse(24, -9, 7, 5, -0.5, 0, Math.PI * 2); ctx.fill();                                  // fej
+  ctx.fillRect(15, -12, 6, 12);                                                                                   // nyak
+  ctx.strokeStyle = '#3a2d22'; ctx.beginPath(); ctx.moveTo(-24, -3); ctx.lineTo(-33, 6); ctx.stroke();           // farok
   ctx.restore(); nameTag(sx, sy, name);
 }
 // visszafelé kompatibilis: a régi drawPlayer most embert rajzol
