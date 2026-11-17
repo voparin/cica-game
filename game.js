@@ -477,9 +477,9 @@ function fillIsoPoly(pts, fill) {
   pts.forEach(([wx, wy, wz], i) => { const [sx, sy] = worldToScreen(wx, wy, wz || 0); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); });
   ctx.closePath(); ctx.fill();
 }
-const shade = (hex, f) => {                           // szín sötétítése f (0..1) arányban
+const shade = (hex, f) => {                           // f>0 sötétít, f<0 világosít (0..255 közé vágva)
   const n = parseInt(hex.slice(1), 16); const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  const d = c => Math.max(0, Math.round(c * (1 - f)));
+  const d = c => Math.max(0, Math.min(255, Math.round(c * (1 - f))));
   return `rgb(${d(r)},${d(g)},${d(b)})`;
 };
 
@@ -533,6 +533,7 @@ function doorQuad(h, side) {
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
   const poly = (pts, fill, line) => { fillIsoPoly(pts, fill); if (line) { ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.stroke(); } };
+  const wline = (a, b, col) => { const [ax, ay] = worldToScreen(a[0], a[1], a[2] || 0), [bx, by] = worldToScreen(b[0], b[1], b[2] || 0); ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); };
   // csak a két kamera felőli (elülső) oldalfal – hátulról előre: px, majd py
   // px fal (x = cx+hw), a jobb oldali
   poly([[h.x + hw, h.y - hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x + hw, h.y - hh, z]], shade(h.wall, 0.22), '#1b1410');
@@ -541,16 +542,24 @@ function drawHouse(h) {
   // tető
   if (h.roofType === 'lapos') {
     poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.roof, '#1b1410');
+    const lo = shade(h.roof, -0.12);                    // világosabb perem (tetőszegély)
+    for (let k = 1; k <= 3; k++) { const yy = h.y - hh + (2 * hh) * k / 4; wline([h.x - hw, yy, z], [h.x + hw, yy, z], lo); }   // burkolat-vonalak
+    wline([h.x - hw + 4, h.y - hh + 4, z], [h.x + hw - 4, h.y - hh + 4, z], lo);
   } else if (h.roofType === 'sator') {                  // négy lapú sátortető egy csúcsba
     const pk = z + 26;
     poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, pk]], shade(h.roof, 0.25), '#1b1410');   // hátsó
     poly([[h.x - hw, h.y - hh, z], [h.x - hw, h.y + hh, z], [h.x, h.y, pk]], shade(h.roof, 0.12), '#1b1410');   // bal
     poly([[h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, pk]], shade(h.roof, 0.18), '#1b1410');   // jobb
     poly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, pk]], h.roof, '#1b1410');                // elülső
+    const ed = shade(h.roof, 0.4);                      // élek a sarkoktól a csúcsig
+    for (const [cx2, cy2] of [[h.x - hw, h.y - hh], [h.x + hw, h.y - hh], [h.x - hw, h.y + hh], [h.x + hw, h.y + hh]]) wline([cx2, cy2, z], [h.x, h.y, pk], ed);
   } else {                                              // nyereg: gerinc az x tengely mentén (y=cy), két lap
     const pk = z + 22;
     poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], shade(h.roof, 0.22), '#1b1410');  // hátsó lap
     poly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], h.roof, '#1b1410');               // elülső lap
+    wline([h.x - hw, h.y, pk], [h.x + hw, h.y, pk], shade(h.roof, -0.2));   // gerinc (világos)
+    const sh = shade(h.roof, 0.3);                      // cserépsorok az elülső lapon
+    for (let k = 1; k <= 3; k++) { const yy = h.y + (hh) * k / 4, zz = pk - (pk - z) * k / 4; wline([h.x - hw, yy, zz], [h.x + hw, yy, zz], sh); }
   }
   // NAGY ajtó a valódi bejárat (h.door) oldalán
   const side = doorSide(h);
