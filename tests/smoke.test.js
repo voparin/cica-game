@@ -172,6 +172,18 @@ check('collideTrees a fába lépő pontot kitolja', (() => {
   return Math.hypot(p.x - t.x, p.y - t.y) > 0;
 })());
 
+// --- Állatok (kutya/macska) ---
+check('animalFor determinisztikus (faj, szín, kezdőpont)', (() => {
+  const h = G.housesIn(0, 0, 3000)[0];
+  const a = G.animalFor(h), b = G.animalFor(h);
+  return a.kind === b.kind && ['kutya', 'macska'].includes(a.kind) && a.hx === b.hx && typeof a.color === 'string';
+})());
+check('animalPose a kezdőpont körül marad (korlátos távolság)', (() => {
+  const h = G.housesIn(0, 0, 3000)[0]; const an = G.animalFor(h);
+  let far = 0; for (let t = 0; t < 20; t += 1.3) { const p = G.animalPose(an, t); if (Math.hypot(p.x - an.hx, p.y - an.hy) > 90) far++; }
+  return far === 0;
+})());
+
 // --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
 check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {
   const v0 = G.vehiclesIn(0, 0, 6000)[0];

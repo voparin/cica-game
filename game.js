@@ -187,6 +187,25 @@ function collideTrees(p, pad) {                          // kör-akadály: kitol
   }
 }
 
+// minden háznak egy kutya vagy macska, determinisztikusan a seedből; a kezdőpont a ház mellett
+const ANIMAL_ROAM = 60;          // ennyit kóborol a kezdőpont körül
+function animalFor(h) {
+  const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
+  const color = kind === 'kutya' ? '#8a6b4a' : '#9a9a9a';
+  return { kind, color, hx: h.x + h.w / 2 + 26, hy: h.y, seed: h.seed };
+}
+// determinisztikus „séta" a kezdőpont körül (az időből + seedből), korlátos távolságon belül
+function animalPose(an, t) {
+  const p1 = (an.seed % 7) * 0.3 + 0.6, p2 = ((an.seed >>> 4) % 5) * 0.3 + 0.5;
+  return { x: an.hx + Math.sin(t * p1) * ANIMAL_ROAM * 0.8, y: an.hy + Math.cos(t * p2) * ANIMAL_ROAM * 0.8,
+           a: Math.atan2(Math.cos(t * p2 + 0.1) - Math.cos(t * p2), Math.sin(t * p1 + 0.1) - Math.sin(t * p1)) };
+}
+function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
+  const out = [];
+  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a }); }
+  return out;
+}
+
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
@@ -667,10 +686,11 @@ function updateNet(dt) {
 }
 
 // ===== Fő ciklus =====
-let last = 0;
+let last = 0, time = 0;
 function frame(now) {
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;   // nagy ugrásokat levágjuk (háttérből visszatérés)
   last = now;
+  time += dt;                                         // globális óra (állatok kóborlása, stb.)
   if (player.inHouse) updateInterior(dt);
   else { updatePlayer(dt); updateDriving(dt); }
   updateNet(dt);
@@ -692,6 +712,7 @@ if (typeof global !== 'undefined') {
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     treesIn, treesInBlock, collideTrees, TREE_R,
+    animalFor, animalPose, animalsIn, ANIMAL_ROAM,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
