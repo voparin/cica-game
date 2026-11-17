@@ -248,6 +248,11 @@ const ISO_X = 0.5, ISO_Y = 0.25;     // vízszintes / függőleges arány (2:1 i
 function iso(wx, wy, wz = 0) {
   return { x: (wx - wy) * ISO_X, y: (wx + wy) * ISO_Y - wz };
 }
+// egy világ-heading (a szög) izometrikus KÉPERNYŐ-szöge – ettől áll mindig a kerekén/lábán
+function isoAngle(a) {
+  const dx = Math.cos(a), dy = Math.sin(a);
+  return Math.atan2((dx + dy) * ISO_Y, (dx - dy) * ISO_X);
+}
 // a világpontot képernyő-koordinátára: a kamera a játékosra centrál (szintén izo)
 function worldToScreen(x, y, z = 0) {
   const p = iso(x, y, z), c = iso(player.x, player.y, 0);
@@ -372,7 +377,7 @@ function drawPerson(sx, sy, a, color, name) {
 // autó: árnyék, karosszéria, szélvédő, 4 kerék, fényszóró; az a szög szerint forgatva
 function drawCarSprite(sx, sy, a, color, name) {
   drawShadow(sx, sy, 22, 9);
-  ctx.save(); ctx.translate(sx, sy - 6); ctx.rotate(a); ctx.scale(1, 0.62);   // izo-lapítás
+  ctx.save(); ctx.translate(sx, sy - 6); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);   // izo-irány + lapítás
   ctx.fillStyle = '#111'; for (const [wx, wy] of [[-13, -11], [13, -11], [-13, 11], [13, 11]]) ctx.fillRect(wx - 3, wy - 3, 6, 6);
   ctx.fillStyle = color || '#d42020'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-20, -11, 40, 22, 5) : ctx.rect(-20, -11, 40, 22); ctx.fill();
   ctx.fillStyle = '#bfe0ff'; ctx.fillRect(4, -8, 10, 16);                     // szélvédő
@@ -382,7 +387,7 @@ function drawCarSprite(sx, sy, a, color, name) {
 // ló: árnyék, test, nyak+fej, 4 láb, farok; az a szög szerint forgatva
 function drawHorseSprite(sx, sy, a, color, name) {
   drawShadow(sx, sy, 18, 8);
-  ctx.save(); ctx.translate(sx, sy - 5); ctx.rotate(a); ctx.scale(1, 0.62);
+  ctx.save(); ctx.translate(sx, sy - 5); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);
   ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 3;
   ctx.beginPath(); for (const lx of [-10, -4, 6, 12]) { ctx.moveTo(lx, 4); ctx.lineTo(lx, 12); } ctx.stroke();   // lábak
   ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2); ctx.fill(); // test
@@ -499,7 +504,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir,
+    iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, isoAngle,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     streetStyle, drawStreets, drawHouse, fillIsoPoly,

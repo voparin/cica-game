@@ -205,6 +205,15 @@ check('a drawHouse és drawStreets léteznek és nem dobnak', (() => {
   try { const h = G.housesIn(0, 0, 2400)[0]; G.drawHouse(h); G.drawStreets(); return true; } catch (e) { return false; }
 })());
 
+// --- Izometrikus szög (a járművek helyes állása) ---
+check('isoAngle determinisztikus és a jobbra-szöget a 2:1 izo szögére képezi', (() => {
+  const r = G.isoAngle(0);
+  return G.isoAngle(0) === r && Math.abs(r - Math.atan2(0.25, 0.5)) < 1e-9;
+})());
+check('isoAngle a dél (π/2) irányt a felső félsíkba viszi (nem fejjel lefelé)', (() => {
+  return G.isoAngle(Math.PI / 2) > Math.PI / 2;    // ~153°, nem a nyers 90°
+})());
+
 // egy képkocka lerajzolása nem dob hibát (kamu ctx)
 let drewOk = true;
 try { rafCb && rafCb(16); } catch (e) { drewOk = false; console.error(e); }
