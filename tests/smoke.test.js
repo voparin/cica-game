@@ -67,6 +67,16 @@ check('collideHouses a házba lépő pontot kitolja', (() => {
   return Math.abs(p.x - h.x) > 0 || Math.abs(p.y - h.y) > 0;
 })());
 check('a drawCity függvény létezik', typeof G.drawCity === 'function');
+
+// --- Járművek a világban ---
+check('vehiclesIn determinisztikus', (() => {
+  const a = G.vehiclesIn(0, 0, 1800), b = G.vehiclesIn(0, 0, 1800);
+  return a.length === b.length && (a.length === 0 || (a[0].x === b[0].x && a[0].kind === b[0].kind));
+})());
+check('a járművek az úton vannak, és van köztük ló és autó is', (() => {
+  const v = G.vehiclesIn(0, 0, 4000);
+  return v.length > 0 && v.every(x => G.onRoad(x.x, x.y)) && v.some(x => x.kind === 'auto') && v.some(x => x.kind === 'lo');
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 

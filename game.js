@@ -86,6 +86,28 @@ function collideHouses(p, pad) {
   for (const h of housesIn(p.x, p.y, ROAD_SPACING)) pushOutOfRect(p, h.x, h.y, h.w, h.h, pad);
 }
 
+// Elérhető (parkoló) járművek az útkereszteződések közelében, determinisztikusan.
+// Nincs AI-forgalom; ezek csak be-/felszállható járművek (ADR-0004).
+function vehiclesInCell(gx, gy) {
+  if (rand01(gx, gy, 31) < 0.45) return [];                 // nem minden kereszteződésnél van jármű
+  const rx = gx * ROAD_SPACING, ry = gy * ROAD_SPACING;     // a kereszteződés
+  const kind = rand01(gx, gy, 32) < 0.5 ? 'auto' : 'lo';
+  const along = rand01(gx, gy, 33) < 0.5;                   // vízszintes vagy függőleges út mentén parkol
+  const off = 120 + Math.floor(rand01(gx, gy, 34) * 200);
+  const x = along ? rx + off : rx, y = along ? ry : ry + off;
+  const a = along ? 0 : Math.PI / 2;
+  return [{ x, y, a, kind, speed: 0, angle: a,
+            color: kind === 'auto' ? '#d42020' : '#8a5a2b', id: 'v_' + gx + '_' + gy }];
+}
+function vehiclesIn(cx, cy, radius) {
+  const out = [];
+  const g0x = Math.floor((cx - radius) / ROAD_SPACING), g1x = Math.floor((cx + radius) / ROAD_SPACING);
+  const g0y = Math.floor((cy - radius) / ROAD_SPACING), g1y = Math.floor((cy + radius) / ROAD_SPACING);
+  for (let gy = g0y; gy <= g1y; gy++) for (let gx = g0x; gx <= g1x; gx++)
+    for (const v of vehiclesInCell(gx, gy)) if (Math.hypot(v.x - cx, v.y - cy) <= radius) out.push(v);
+  return out;
+}
+
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
@@ -125,6 +147,15 @@ function drawCity() {
     const [sx, sy] = worldToScreen(h.x, h.y);
     ctx.fillStyle = '#6b5641'; ctx.fillRect(sx - h.w / 2, sy - h.h / 2, h.w, h.h);
     ctx.fillStyle = '#caa36f'; const [dx, dy] = worldToScreen(h.door.x, h.door.y); ctx.fillRect(dx - 6, dy - 6, 12, 12);   // ajtó
+  }
+  // elérhető járművek (lovak, autók)
+  for (const v of vehiclesIn(player.x, player.y, Math.hypot(W, H) / 2 + ROAD_SPACING)) {
+    if (player.riding && player.riding.id === v.id) continue;   // amiben ülünk, azt a játékosként rajzoljuk
+    const [sx, sy] = worldToScreen(v.x, v.y);
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(v.a);
+    ctx.fillStyle = v.color;
+    if (v.kind === 'auto') ctx.fillRect(-20, -11, 40, 22); else ctx.fillRect(-16, -7, 32, 14);
+    ctx.restore();
   }
 }
 
@@ -240,6 +271,7 @@ if (typeof global !== 'undefined') {
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     pushOutOfRect, collideHouses,
+    vehiclesIn, vehiclesInCell,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
