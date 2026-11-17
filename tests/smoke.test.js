@@ -252,6 +252,9 @@ check('a rajzlista tartalmaz fát és állatot', (() => {
 check('drawTree és drawAnimal nem dob hibát', (() => {
   try { G.drawTree(100, 100, true); G.drawAnimal(100, 100, 0, 'kutya', '#8a6b4a'); return true; } catch (e) { return false; }
 })());
+check('drawAnimal a onTree és barking jelzőkkel nem dob hibát', (() => {
+  try { G.drawAnimal(100, 100, 0, 'macska', '#9a9a9a', { onTree: true }); G.drawAnimal(100, 100, 0, 'kutya', '#8a6b4a', { barking: true }); return true; } catch (e) { return false; }
+})());
 
 // --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
 check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {

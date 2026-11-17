@@ -481,7 +481,7 @@ function buildDrawList() {
   const list = [];
   for (const h of housesIn(player.x, player.y, R)) list.push({ type: 'house', wx: h.x, wy: h.y, key: depthKey(h.x, h.y), h });
   for (const t of treesIn(player.x, player.y, R)) list.push({ type: 'fa', wx: t.x, wy: t.y, big: t.big, key: depthKey(t.x, t.y) });
-  for (const g of animalsIn(player.x, player.y, R)) list.push({ type: 'allat', wx: g.x, wy: g.y, a: g.a, kind: g.an.kind, color: g.an.color, key: depthKey(g.x, g.y) });
+  for (const g of animalsIn(player.x, player.y, R)) list.push({ type: 'allat', wx: g.x, wy: g.y, a: g.a, kind: g.an.kind, color: g.an.color, onTree: g.onTree, barking: g.barking, key: depthKey(g.x, g.y) });
   for (const v of vehiclesIn(player.x, player.y, R)) {
     if (player.riding && player.riding.id === v.id) continue;
     list.push({ type: v.kind === 'lo' ? 'horse' : 'car', wx: v.x, wy: v.y, a: v.a, color: v.color, key: depthKey(v.x, v.y) });
@@ -630,7 +630,7 @@ function drawCity() {
     if (e.type === 'house') { drawHouse(e.h); continue; }
     const [sx, sy] = worldToScreen(e.wx, e.wy);
     if (e.type === 'fa') drawTree(sx, sy, e.big);
-    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color);
+    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking });
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
     else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name, e.hold);   // a járművön ülő: feljebb, hogy kilátszódjon
@@ -651,14 +651,22 @@ function drawTree(sx, sy, big) {
   ctx.fillStyle = '#3f7d46'; ctx.beginPath(); ctx.ellipse(sx, sy - 34, big ? 26 : 20, big ? 30 : 24, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#4f9a57'; ctx.beginPath(); ctx.ellipse(sx - 6, sy - 40, big ? 14 : 11, big ? 16 : 13, 0, 0, Math.PI * 2); ctx.fill();
 }
-function drawAnimal(sx, sy, a, kind, color) {
-  drawShadow(sx, sy, 10, 5);
-  ctx.save(); ctx.translate(sx, sy); ctx.rotate(a); ctx.scale(1, 0.7);
+function drawAnimal(sx, sy, a, kind, color, flags) {
+  flags = flags || {};
+  const up = flags.onTree ? 38 : 0;                      // a fán ülő macska a lombnál (feljebb)
+  const y = sy - up;
+  if (!flags.onTree) drawShadow(sx, sy, 10, 5);
+  ctx.save(); ctx.translate(sx, y); ctx.rotate(a); ctx.scale(1, 0.7);
   ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(0, 0, 11, 6, 0, 0, Math.PI * 2); ctx.fill();   // test
   ctx.beginPath(); ctx.arc(10, -2, 4, 0, Math.PI * 2); ctx.fill();          // fej
   if (kind === 'macska') { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-11, -2); ctx.lineTo(-17, -7); ctx.stroke(); }  // macskafarok
   else { ctx.fillRect(-14, -3, 5, 2); }                                     // kutyafarok
   ctx.restore();
+  if (flags.barking) {                                   // „Vau!" buborék a kutya fölött
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(sx + 14, sy - 16, 15, 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1b1410'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Vau!', sx + 14, sy - 16); ctx.textBaseline = 'alphabetic';
+  }
 }
 function nameTag(sx, sy, name) {
   if (!name) return;
