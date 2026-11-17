@@ -189,6 +189,7 @@ function collideTrees(p, pad) {                          // kör-akadály: kitol
 
 // minden háznak egy kutya vagy macska, determinisztikusan a seedből; a kezdőpont a ház mellett
 const ANIMAL_ROAM = 60;          // ennyit kóborol a kezdőpont körül
+const BARK_RANGE = 130;          // ennyin belül két kutya egymásra ugat
 function animalFor(h) {
   const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
   const color = kind === 'kutya' ? '#8a6b4a' : '#9a9a9a';
@@ -233,7 +234,14 @@ function animalPose(an, t) {
 }
 function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
   const out = [];
-  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree }); }
+  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree, barking: false }); }
+  for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {   // két közeli kutya egymásra ugat
+    if (out[i].an.kind === 'kutya' && out[j].an.kind === 'kutya' && Math.hypot(out[i].x - out[j].x, out[i].y - out[j].y) < BARK_RANGE) {
+      out[i].barking = out[j].barking = true;
+      const ang = Math.atan2(out[j].y - out[i].y, out[j].x - out[i].x);   // egymás felé fordulnak
+      out[i].a = ang; out[j].a = ang + Math.PI;
+    }
+  }
   return out;
 }
 
@@ -831,7 +839,7 @@ if (typeof global !== 'undefined') {
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     treesIn, treesInBlock, collideTrees, TREE_R,
-    animalFor, animalPose, animalsIn, ANIMAL_ROAM,
+    animalFor, animalPose, animalsIn, ANIMAL_ROAM, BARK_RANGE,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,

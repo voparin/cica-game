@@ -234,6 +234,16 @@ check('a macska és a kutya másképp mozog (eltérő pálya ugyanazzal a seedde
   let diff = 0; for (let t = 0; t < 12; t += 0.9) { const c = G.animalPose(cat, t), d = G.animalPose(dog, t); if (Math.hypot(c.x - d.x, c.y - d.y) > 3) diff++; }
   return diff >= 3;
 })());
+check('két közeli kutya ugat (barking), és a küszöb (BARK_RANGE) létezik', (() => {
+  if (typeof G.BARK_RANGE !== 'number' || G.BARK_RANGE <= 0) return false;
+  const dogs = G.animalsIn(0, 0, 6000).filter(g => g.an.kind === 'kutya');
+  let ok = true;                                         // a definíció: ha két kutya < BARK_RANGE, mindkettő barking
+  for (let i = 0; i < dogs.length; i++) for (let j = i + 1; j < dogs.length; j++) {
+    const close = Math.hypot(dogs[i].x - dogs[j].x, dogs[i].y - dogs[j].y) < G.BARK_RANGE;
+    if (close && !(dogs[i].barking && dogs[j].barking)) ok = false;
+  }
+  return ok;
+})());
 check('a rajzlista tartalmaz fát és állatot', (() => {
   G.player.inHouse = null; G.player.riding = null; G.player.x = 0; G.player.y = 0;
   const list = G.buildDrawList();
