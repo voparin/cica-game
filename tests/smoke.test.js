@@ -201,6 +201,16 @@ check('animalPose a kezdőpont körül marad (korlátos távolság)', (() => {
   let far = 0; for (let t = 0; t < 20; t += 1.3) { const p = G.animalPose(an, t); if (Math.hypot(p.x - an.hx, p.y - an.hy) > 90) far++; }
   return far === 0;
 })());
+check('két állat NEM szinkronban mozog (eltérő fázis a seedből)', (() => {
+  const a = { kind: 'macska', hx: 0, hy: 0, seed: 111 }, b = { kind: 'macska', hx: 0, hy: 0, seed: 222 };
+  let apart = 0; for (let t = 0; t < 8; t += 0.7) { const pa = G.animalPose(a, t), pb = G.animalPose(b, t); if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > 8) apart++; }
+  return apart >= 4;                                    // a legtöbb pillanatban külön helyen (nem együtt mozognak)
+})());
+check('a macska és a kutya másképp mozog (eltérő pálya ugyanazzal a seeddel)', (() => {
+  const cat = { kind: 'macska', hx: 0, hy: 0, seed: 500 }, dog = { kind: 'kutya', hx: 0, hy: 0, seed: 500 };
+  let diff = 0; for (let t = 0; t < 12; t += 0.9) { const c = G.animalPose(cat, t), d = G.animalPose(dog, t); if (Math.hypot(c.x - d.x, c.y - d.y) > 3) diff++; }
+  return diff >= 3;
+})());
 check('a rajzlista tartalmaz fát és állatot', (() => {
   G.player.inHouse = null; G.player.riding = null; G.player.x = 0; G.player.y = 0;
   const list = G.buildDrawList();
