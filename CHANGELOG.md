@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.5.1 – 2026-11-17
+
+- Házrajz-javítás: a házak mostantól a **kamera felőli** (elülső) falakkal
+  rajzolódnak, így nem néznek ki féloldalasnak/kinyitott könyvnek (a korábbi kód a
+  kamerától elfelé néző falakat rajzolta). A tető is ehhez igazodik.
+- Az ajtó a **valódi bejárat** (`h.door`) oldalán jelenik meg: ha elöl van, a nagy
+  ajtó oda kerül; ha hátul (nem látható), egy sárga „bejárat" nyíl mutat rá, így
+  egyértelmű, hova kell állni az E-hez.
+
 ## 0.5.0 – 2026-11-17
 
 - A házak tömörek (nem átlátszók): csak a kamera felőli falak + körvonal (ADR-0011);
