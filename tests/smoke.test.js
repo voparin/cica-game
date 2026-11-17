@@ -53,6 +53,19 @@ check('a ház ajtaja a házon kívül, az út felé esik', (() => {
   const h = G.housesIn(0, 0, 1800)[0];
   return h.door && Math.hypot(h.door.x - h.x, h.door.y - h.y) > h.w / 2;
 })());
+
+// --- Ütközés a házakkal ---
+check('pushOutOfRect kitol egy ponton belülről a legközelebbi él felé', (() => {
+  const p = { x: 5, y: 1 };                 // egy 0,0 középpontú 20x20 téglalap belsejében
+  G.pushOutOfRect(p, 0, 0, 20, 20, 0);
+  return Math.abs(p.x) >= 10 - 1e-6 || Math.abs(p.y) >= 10 - 1e-6;
+})());
+check('collideHouses a házba lépő pontot kitolja', (() => {
+  const h = G.housesIn(0, 0, 1800)[0];
+  const p = { x: h.x, y: h.y };             // pont a ház közepén
+  G.collideHouses(p, 0);
+  return Math.abs(p.x - h.x) > 0 || Math.abs(p.y - h.y) > 0;
+})());
 check('a netConnect függvény létezik (a szerver ezt várja a kiszolgált fájlban)', /netConnect/.test(src));
 check('a vászon méretet kapott (resize lefutott)', G.W === 1280 && G.H === 720);
 

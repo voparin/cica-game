@@ -70,6 +70,22 @@ function housesIn(cx, cy, radius) {
   return out;
 }
 
+// ha a (p.x,p.y) pont a (cx,cy) középpontú, w×h téglalapon (pad ráhagyással) belül van,
+// a legkisebb elmozdulással kitolja a legközelebbi élre
+function pushOutOfRect(p, cx, cy, w, h, pad) {
+  const hw = w / 2 + pad, hh = h / 2 + pad;
+  const dx = p.x - cx, dy = p.y - cy;
+  if (Math.abs(dx) >= hw || Math.abs(dy) >= hh) return false;   // kívül
+  const ox = hw - Math.abs(dx), oy = hh - Math.abs(dy);          // átfedés mindkét tengelyen
+  if (ox < oy) p.x = cx + Math.sign(dx || 1) * hw;               // a kisebbik átfedés mentén tolunk ki
+  else p.y = cy + Math.sign(dy || 1) * hh;
+  return true;
+}
+// a pontot (játékos/jármű) kitolja minden közeli házból
+function collideHouses(p, pad) {
+  for (const h of housesIn(p.x, p.y, ROAD_SPACING)) pushOutOfRect(p, h.x, h.y, h.w, h.h, pad);
+}
+
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
@@ -90,6 +106,7 @@ function updatePlayer(dt) {
     player.y += (dy / n) * SPEED * dt;
     player.a = Math.atan2(dy, dx);
   }
+  if (!player.inHouse && !player.riding) collideHouses(player, 12);
 }
 
 // ===== Rajzolás =====
@@ -217,5 +234,6 @@ if (typeof global !== 'undefined') {
   global.G = { player, net, netState, netReceive, updatePlayer, keys,
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
+    pushOutOfRect, collideHouses,
     get W() { return W; }, get H() { return H; } };
 }
