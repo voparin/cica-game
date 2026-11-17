@@ -10,3 +10,6 @@ Itt van naplózva minden architekturális döntés: mit, miért és milyen alter
 | [0003](0003-cella-alapu-determinisztikus-generalt-varos.md) | Cella-alapú, determinisztikus, generált város | Elfogadva | 2026-11-17 |
 | [0004](0004-kozos-iranyitott-jarmufizika-es-be-felszallas.md) | Közös, irányított járműfizika és E-s be-/felszállás | Elfogadva | 2026-11-17 |
 | [0005](0005-hazak-belseje-kulon-szoba.md) | Házak belseje külön koordináta-rendszerű szobaként | Elfogadva | 2026-11-17 |
+| [0006](0006-izometrikus-2-5d-vetites.md) | Izometrikus 2.5D vetítés | Elfogadva | 2026-11-17 |
+| [0007](0007-y-rendezett-takaras.md) | Y-rendezett (mélység szerinti) rajzolás a takaráshoz | Elfogadva | 2026-11-17 |
+| [0008](0008-hazak-vizualis-valtozatossaga.md) | Házak vizuális változatossága a seedből | Elfogadva | 2026-11-17 |

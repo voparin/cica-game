@@ -2,6 +2,21 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.3.0 – 2026-11-17
+
+Látvány: 2.5D izometrikus nézet (a játékmenet változatlan):
+
+- Izometrikus vetítés (ADR-0006): `iso`, `worldToScreen` magassággal; a nyilak a
+  képernyőhöz igazodnak (`screenToWorldDir`).
+- Mélység szerinti takarás (ADR-0007): `buildDrawList` + `depthKey` – a házak,
+  járművek és szereplők helyesen fedik egymást.
+- Változatos, többszínű házak (ADR-0008): falszín/tetőszín paletta, 3-féle tető
+  (nyereg/sátor/lapos), magasság; az ütközés változatlan (a `w`/`h` alaprajz).
+- Változatos utcák izometrikusan (`drawStreets`, `streetStyle`).
+- Felismerhető szereplők: ember/autó/ló alakú sprite-ok árnyékkal (`drawPerson`,
+  `drawCarSprite`, `drawHorseSprite`).
+- A fizika, a hálózat és a `server.js` érintetlen (`server.test.js` 58/58).
+
 ## 0.2.0 – 2026-11-17
 
 A tényleges játék első rétege (nulláról, függőség nélkül):

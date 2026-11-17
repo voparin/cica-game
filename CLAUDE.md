@@ -12,7 +12,7 @@ követi.
 | Fájl | Szerep |
 |---|---|
 | `index.html` | betölti a canvas-t és a `game.js`-t |
-| `game.js` | a játék: végtelen generált város (utcák, házak), gyalogos, lovak/autók, `E`-s interakció (ADR-0001, 0003–0005) |
+| `game.js` | a játék: 2.5D izometrikus város (utcák, színes tetős házak), ember/autó/ló szereplők, `E`-s interakció (ADR-0001, 0003–0008) |
 | `server.js` | többjátékos szerver (ADR-0002): kiszolgálja a játékot, `/ws` – a játékosok helyzete; fiókok, Google-belépés, PvP; függőség nélkül |
 | `Dockerfile`, `.gcloudignore` | a szerver a Google Cloud Runra (külön `szofi-game` projekt) |
 | `tests/smoke.test.js` | füstteszt kamu böngészőkörnyezetben (Node, függőség nélkül) |
@@ -34,6 +34,17 @@ követi.
 - **Nyilak:** gyalogos mozgás; járműben vezetés (fel/le gyorsít-fékez, bal/jobb forgat).
 - **E:** kontextusfüggő – ajtó közelében ház be/ki (külön belső szoba), jármű
   közelében be-/felszállás (autó / ló), járműből kiszállás.
+
+## Látvány (2.5D izometrikus, ADR-0006–0008)
+
+- A kirajzolás izometrikus (`iso`, `worldToScreen` magassággal); a világ `(x,y)`
+  és a fizika változatlan. A nyíl-bemenet a képernyőhöz igazodik (`screenToWorldDir`).
+- A takarás mélység szerint: `buildDrawList` összegyűjti a kamera körüli házakat,
+  járműveket és szereplőket, `depthKey` szerint rendezve rajzol. **Új, a világban
+  megjelenő dolgot a `buildDrawList`-be is vegyél fel, hogy helyesen takarjon.**
+- Házak: `drawHouse` (oldalfalak + tető a `roofType` szerint), színek/magasság a
+  seedből (`HOUSE_WALLS`/`HOUSE_ROOFS`/`ROOF_TYPES`); utcák: `drawStreets`.
+- Szereplők: `drawPerson` / `drawCarSprite` / `drawHorseSprite` (árnyékkal).
 
 ## Tesztek
 
