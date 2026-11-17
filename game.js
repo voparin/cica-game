@@ -237,7 +237,7 @@ function drawInterior() {
   const ox = W / 2 - r.rw / 2, oy = H / 2 - r.rh / 2;         // a szoba középre
   ctx.fillStyle = '#4b3f36'; ctx.fillRect(ox, oy, r.rw, r.rh);
   ctx.fillStyle = '#caa36f'; ctx.fillRect(ox + r.exit.x - 16, oy + r.exit.y - 6, 32, 12);   // kijárat
-  ctx.fillStyle = player.color; ctx.fillRect(ox + player.ix - 10, oy + player.iy - 10, 20, 20);
+  drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name);
   ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText('Házban vagy – menj a kijárathoz és nyomd meg az E-t', 12, 24);
 }
@@ -342,27 +342,13 @@ function drawHouse(h) {
 }
 
 function drawCity() {
-  // háttér már kész (draw() tölti); most az utak
-  const left = player.x - W / 2, top = player.y - H / 2;
-  ctx.fillStyle = '#394a5a';
-  const g0x = Math.floor((left) / ROAD_SPACING) - 1, g1x = Math.floor((left + W) / ROAD_SPACING) + 1;
-  const g0y = Math.floor((top) / ROAD_SPACING) - 1, g1y = Math.floor((top + H) / ROAD_SPACING) + 1;
-  for (let gx = g0x; gx <= g1x; gx++) { const [sx] = worldToScreen(gx * ROAD_SPACING, 0); ctx.fillRect(sx - ROAD_HALF, 0, ROAD_HALF * 2, H); }
-  for (let gy = g0y; gy <= g1y; gy++) { const [, sy] = worldToScreen(0, gy * ROAD_SPACING); ctx.fillRect(0, sy - ROAD_HALF, W, ROAD_HALF * 2); }
-  // házak
-  for (const h of housesIn(player.x, player.y, Math.hypot(W, H) / 2 + ROAD_SPACING)) {
-    const [sx, sy] = worldToScreen(h.x, h.y);
-    ctx.fillStyle = '#6b5641'; ctx.fillRect(sx - h.w / 2, sy - h.h / 2, h.w, h.h);
-    ctx.fillStyle = '#caa36f'; const [dx, dy] = worldToScreen(h.door.x, h.door.y); ctx.fillRect(dx - 6, dy - 6, 12, 12);   // ajtó
-  }
-  // elérhető járművek (lovak, autók)
-  for (const v of vehiclesIn(player.x, player.y, Math.hypot(W, H) / 2 + ROAD_SPACING)) {
-    if (player.riding && player.riding.id === v.id) continue;   // amiben ülünk, azt a játékosként rajzoljuk
-    const [sx, sy] = worldToScreen(v.x, v.y);
-    ctx.save(); ctx.translate(sx, sy); ctx.rotate(v.a);
-    ctx.fillStyle = v.color;
-    if (v.kind === 'auto') ctx.fillRect(-20, -11, 40, 22); else ctx.fillRect(-16, -7, 32, 14);
-    ctx.restore();
+  drawStreets();
+  for (const e of buildDrawList()) {
+    if (e.type === 'house') { drawHouse(e.h); continue; }
+    const [sx, sy] = worldToScreen(e.wx, e.wy);
+    if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
+    else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
+    else drawPerson(sx, sy, e.a, e.color, e.name);
   }
 }
 
@@ -410,26 +396,10 @@ function drawPlayer(x, y, a, color, name) { const [sx, sy] = worldToScreen(x, y)
 
 function draw() {
   if (player.inHouse) { drawInterior(); return; }
-  ctx.fillStyle = '#0d1b2a';
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#17202a'; ctx.fillRect(0, 0, W, H);   // ég/háttér
   drawCity();
-  for (const o of net.others.values()) {
-    if (o.car) {
-      const [sx, sy] = worldToScreen(o.x, o.y);
-      ctx.save(); ctx.translate(sx, sy); ctx.rotate(o.a);
-      ctx.fillStyle = o.kind === 'lo' ? '#8a5a2b' : (o.color || '#d42020');
-      if (o.kind === 'lo') ctx.fillRect(-16, -7, 32, 14); else ctx.fillRect(-20, -11, 40, 22);
-      ctx.restore();
-      if (o.name) { ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(o.name, sx, sy - 18); }
-    } else {
-      drawPlayer(o.x, o.y, o.a, o.color || '#d42020', o.name);
-    }
-  }
-  drawPlayer(player.x, player.y, player.a, player.color, player.name);
   // HUD
-  ctx.fillStyle = '#fff';
-  ctx.font = '14px sans-serif';
-  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText(net.online ? `Online – ${net.others.size + 1} játékos` : 'Offline (egyjátékos)', 12, 22);
   ctx.fillText('Nyilak: mozgás/vezetés   E: ház be/ki, jármű be/felszállás', 12, 40);
 }

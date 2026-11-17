@@ -209,6 +209,9 @@ check('a drawHouse és drawStreets léteznek és nem dobnak', (() => {
 let drewOk = true;
 try { rafCb && rafCb(16); } catch (e) { drewOk = false; console.error(e); }
 check('egy képkocka lerajzolása nem dob hibát', drewOk);
+check('a teljes izometrikus képkocka (utcák + rajzlista) nem dob hibát', (() => {
+  G.player.inHouse = null; try { rafCb && rafCb(32); return true; } catch (e) { console.error(e); return false; }
+})());
 
 console.log(failed ? `\n${failed} teszt elbukott` : '\nMinden füstteszt sikeres');
 process.exit(failed ? 1 : 0);
