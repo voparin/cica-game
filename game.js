@@ -278,9 +278,12 @@ function iso(wx, wy, wz = 0) {
   return { x: (wx - wy) * ISO_X, y: (wx + wy) * ISO_Y - wz };
 }
 // egy világ-heading (a szög) izometrikus KÉPERNYŐ-szöge – ettől áll mindig a kerekén/lábán
-function isoAngle(a) {
-  const dx = Math.cos(a), dy = Math.sin(a);
-  return Math.atan2((dx + dy) * ISO_Y, (dx - dy) * ISO_X);
+// egy jármű talaj-téglalapjának 4 VILÁG-sarka: len = hossz (menetirány), wid = szélesség;
+// a szöggel (a) forgatva. Sorrend: elöl-bal, elöl-jobb, hátul-jobb, hátul-bal.
+function vehicleQuad(wx, wy, a, len, wid) {
+  const c = Math.cos(a), s = Math.sin(a), hl = len / 2, hw = wid / 2;
+  const pt = (lx, ly) => [wx + lx * c - ly * s, wy + lx * s + ly * c];
+  return [pt(hl, -hw), pt(hl, hw), pt(-hl, hw), pt(-hl, -hw)];
 }
 // a világpontot képernyő-koordinátára: a kamera a játékosra centrál (szintén izo)
 function worldToScreen(x, y, z = 0) {
@@ -415,27 +418,60 @@ function drawPerson(sx, sy, a, color, name) {
   ctx.fillStyle = '#3a2d22'; ctx.fillRect(Math.cos(a) * 3 - 2, -24 + Math.sin(a) * 2, 4, 2);                        // nézési jelzés
   ctx.restore(); nameTag(sx, sy, name);
 }
-// autó: árnyék, karosszéria, szélvédő, 4 kerék, fényszóró; az izo-szög szerint forgatva
-function drawCarSprite(sx, sy, a, color, name) {
-  drawShadow(sx, sy, 34, 15);
-  ctx.save(); ctx.translate(sx, sy - 9); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);   // izo-irány + lapítás
-  ctx.fillStyle = '#111'; for (const [wx, wy] of [[-20, -17], [20, -17], [-20, 17], [20, 17]]) ctx.fillRect(wx - 5, wy - 5, 10, 10);
-  ctx.fillStyle = color || '#d42020'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-30, -17, 60, 34, 8) : ctx.rect(-30, -17, 60, 34); ctx.fill();
-  ctx.fillStyle = '#bfe0ff'; ctx.fillRect(6, -12, 15, 24);                    // szélvédő
-  ctx.fillStyle = '#fff'; ctx.fillRect(27, -12, 4, 6); ctx.fillRect(27, 6, 4, 6);  // fényszóró
-  ctx.restore(); nameTag(sx, sy, name);
+// egy jármű-lokális pontot (lx = menetirány, ly = oldal, lz = magasság) a képernyő-horgonyhoz
+// képez: a szöggel a VILÁGBAN forgat, majd izometriába vetít – így a jármű a talajon fekszik (nem dől)
+function vehPt(sx, sy, a, lx, ly, lz = 0) {
+  const c = Math.cos(a), s = Math.sin(a);
+  const wx = lx * c - ly * s, wy = lx * s + ly * c;     // elforgatott világ-eltolás
+  return [sx + (wx - wy) * ISO_X, sy + (wx + wy) * ISO_Y - lz];
 }
-// ló: árnyék, test, nyak+fej, 4 láb, farok; az izo-szög szerint forgatva
+function fillPoly(pts, fill) { ctx.fillStyle = fill; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); }
+
+// autó: a talajon fekvő, menetirányba forgatott test (nem dől); kerekek, szélvédő, fényszóró. ~2×
+function drawCarSprite(sx, sy, a, color, name) {
+  const LEN = 120, WID = 64;                            // 2× akkora, mint korábban
+  drawShadow(sx, sy, 44, 22);
+  const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
+  // kerekek (a talajon, a test alatt)
+  ctx.fillStyle = '#111';
+  for (const [lx, ly] of [[LEN * 0.32, -WID / 2], [LEN * 0.32, WID / 2], [-LEN * 0.32, -WID / 2], [-LEN * 0.32, WID / 2]]) {
+    const w = P(lx, ly, 0); ctx.beginPath(); ctx.ellipse(w[0], w[1], 9, 6, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  // karosszéria teteje (kissé megemelve, hogy legyen térfogata)
+  const Z = 16;
+  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], color || '#d42020');
+  // oldalfalak a talajtól a tetőig (a két kamera felőli él) – sötétebb árnyalat
+  fillPoly([P(LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(color || '#d42020', 0.25));
+  fillPoly([P(-LEN / 2, -WID / 2, 0), P(-LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], shade(color || '#d42020', 0.4));
+  // szélvédő (az első harmadban)
+  fillPoly([P(LEN * 0.18, -WID * 0.4, Z), P(LEN * 0.18, WID * 0.4, Z), P(LEN * 0.02, WID * 0.4, Z), P(LEN * 0.02, -WID * 0.4, Z)], '#bfe0ff');
+  // fényszórók (az orrnál)
+  ctx.fillStyle = '#fff';
+  for (const ly of [-WID * 0.3, WID * 0.3]) { const w = P(LEN / 2, ly, Z); ctx.fillRect(w[0] - 2, w[1] - 2, 4, 4); }
+  nameTag(sx, sy, name);
+}
+// ló: a talajon álló, menetirányba forgatott test (nem dől); lábak, nyak+fej, farok. ~2×
 function drawHorseSprite(sx, sy, a, color, name) {
-  drawShadow(sx, sy, 28, 12);
-  ctx.save(); ctx.translate(sx, sy - 8); ctx.rotate(isoAngle(a)); ctx.scale(1, 0.62);
-  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 4;
-  ctx.beginPath(); for (const lx of [-15, -6, 9, 18]) { ctx.moveTo(lx, 6); ctx.lineTo(lx, 18); } ctx.stroke();   // lábak
-  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 24, 11, 0, 0, Math.PI * 2); ctx.fill(); // test
-  ctx.beginPath(); ctx.ellipse(24, -9, 7, 5, -0.5, 0, Math.PI * 2); ctx.fill();                                  // fej
-  ctx.fillRect(15, -12, 6, 12);                                                                                   // nyak
-  ctx.strokeStyle = '#3a2d22'; ctx.beginPath(); ctx.moveTo(-24, -3); ctx.lineTo(-33, 6); ctx.stroke();           // farok
-  ctx.restore(); nameTag(sx, sy, name);
+  const LEN = 96, WID = 40;
+  drawShadow(sx, sy, 34, 16);
+  const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
+  const Z = 30;                                         // a hát magassága
+  // lábak (a talajtól a hasig, a 4 saroknál)
+  ctx.strokeStyle = shade(color || '#8a5a2b', 0.3); ctx.lineWidth = 5;
+  for (const [lx, ly] of [[LEN * 0.3, -WID / 2], [LEN * 0.3, WID / 2], [-LEN * 0.3, -WID / 2], [-LEN * 0.3, WID / 2]]) {
+    const foot = P(lx, ly, 0), hip = P(lx, ly, Z * 0.7); ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
+  }
+  // test (felső lap, enyhén megemelve)
+  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], color || '#8a5a2b');
+  fillPoly([P(LEN / 2, WID / 2, Z * 0.7), P(-LEN / 2, WID / 2, Z * 0.7), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(color || '#8a5a2b', 0.25));
+  // nyak + fej (az orrnál, feljebb)
+  const neck = P(LEN / 2, 0, Z), head = P(LEN * 0.66, 0, Z + 16);
+  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
+  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(head[0], head[1], 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+  // farok (hátul)
+  const tail0 = P(-LEN / 2, 0, Z), tail1 = P(-LEN * 0.66, 0, Z * 0.3);
+  ctx.strokeStyle = '#3a2d22'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tail0[0], tail0[1]); ctx.lineTo(tail1[0], tail1[1]); ctx.stroke();
+  nameTag(sx, sy, name);
 }
 // visszafelé kompatibilis: a régi drawPlayer most embert rajzol
 function drawPlayer(x, y, a, color, name) { const [sx, sy] = worldToScreen(x, y); drawPerson(sx, sy, a, color, name); }
@@ -547,7 +583,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, isoAngle,
+    iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     streetStyle, drawStreets, drawHouse, fillIsoPoly,

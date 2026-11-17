@@ -229,20 +229,21 @@ check('a hibás / ismeretlen üzenetet csendben kihagyja', true);
 // --- Szereplő-sprite-ok ---
 check('a sprite-rajzolók léteznek', typeof G.drawPerson === 'function' && typeof G.drawCarSprite === 'function' && typeof G.drawHorseSprite === 'function');
 check('egy sprite rajzolása nem dob hibát (kamu ctx)', (() => { try { G.drawPerson(100, 100, 0, '#fff', 'A'); G.drawCarSprite(100, 100, 1, '#f00'); G.drawHorseSprite(100, 100, 2, '#8a5a2b'); return true; } catch (e) { return false; } })());
+check('vehicleQuad a talajon fekvő téglalapot ad (szemközti oldalak egyenlők)', (() => {
+  const q = G.vehicleQuad(0, 0, 0, 120, 60);        // 4 világ-sarok: [elöl-bal, elöl-jobb, hátul-jobb, hátul-bal]
+  const d = (p, r) => Math.hypot(p[0] - r[0], p[1] - r[1]);
+  const s01 = d(q[0], q[1]), s23 = d(q[2], q[3]), s12 = d(q[1], q[2]), s30 = d(q[3], q[0]);
+  return Math.abs(s01 - s23) < 1e-6 && Math.abs(s12 - s30) < 1e-6 && q.length === 4;
+})());
+check('vehicleQuad a szöggel forgat (a=π/2 esetén más, mint a=0)', (() => {
+  const a = G.vehicleQuad(0, 0, 0, 120, 60), b = G.vehicleQuad(0, 0, Math.PI / 2, 120, 60);
+  return Math.abs(a[0][0] - b[0][0]) > 1 || Math.abs(a[0][1] - b[0][1]) > 1;
+})());
 
 // --- Ház- és utcarajz ---
 check('streetStyle determinisztikus és 0..2 közötti', (() => { const a = G.streetStyle(2, 3), b = G.streetStyle(2, 3); return a === b && a >= 0 && a <= 2; })());
 check('a drawHouse és drawStreets léteznek és nem dobnak', (() => {
   try { const h = G.housesIn(0, 0, 2400)[0]; G.drawHouse(h); G.drawStreets(); return true; } catch (e) { return false; }
-})());
-
-// --- Izometrikus szög (a járművek helyes állása) ---
-check('isoAngle determinisztikus és a jobbra-szöget a 2:1 izo szögére képezi', (() => {
-  const r = G.isoAngle(0);
-  return G.isoAngle(0) === r && Math.abs(r - Math.atan2(0.25, 0.5)) < 1e-9;
-})());
-check('isoAngle a dél (π/2) irányt a felső félsíkba viszi (nem fejjel lefelé)', (() => {
-  return G.isoAngle(Math.PI / 2) > Math.PI / 2;    // ~153°, nem a nyers 90°
 })());
 
 // egy képkocka lerajzolása nem dob hibát (kamu ctx)
