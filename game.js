@@ -280,11 +280,22 @@ function buildDrawList() {
     list.push({ type: v.kind === 'lo' ? 'horse' : 'car', wx: v.x, wy: v.y, a: v.a, color: v.color, key: depthKey(v.x, v.y) });
   }
   for (const o of net.others.values()) {
-    const type = o.car ? (o.kind === 'lo' ? 'horse' : 'car') : 'person';
-    list.push({ type, wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key: depthKey(o.x, o.y) });
+    const key = depthKey(o.x, o.y);
+    if (o.car) {                                         // jármű + a rajta ülő másik játékos
+      list.push({ type: o.kind === 'lo' ? 'horse' : 'car', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', key });
+      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, rider: true });
+    } else {
+      list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key });
+    }
   }
-  const pt = player.riding ? (player.riding.kind === 'lo' ? 'horse' : 'car') : 'player';
-  list.push({ type: pt, wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: depthKey(player.x, player.y), self: true });
+  const pkey = depthKey(player.x, player.y);
+  if (player.riding) {                                   // a saját jármű + rajta mi magunk
+    const vt = player.riding.kind === 'lo' ? 'horse' : 'car';
+    list.push({ type: vt, wx: player.x, wy: player.y, a: player.a, color: player.riding.color, key: pkey, self: true });
+    list.push({ type: 'person', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, rider: true });
+  } else {
+    list.push({ type: 'player', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true });
+  }
   list.sort((a, b) => a.key - b.key);
   return list;
 }
@@ -353,6 +364,7 @@ function drawCity() {
     const [sx, sy] = worldToScreen(e.wx, e.wy);
     if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
+    else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name);   // a járművön ülő: feljebb, hogy kilátszódjon
     else drawPerson(sx, sy, e.a, e.color, e.name);
   }
 }

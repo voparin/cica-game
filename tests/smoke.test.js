@@ -105,6 +105,15 @@ check('buildDrawList a játékost és a közeli házakat tartalmazza, y szerint 
   let sorted = true; for (let i = 1; i < list.length; i++) if (list[i].key < list[i - 1].key) sorted = false;
   return hasPlayer && hasHouse && sorted;
 })());
+check('járművön ülve a rajzlista a járművet ÉS a rajta ülő személyt is tartalmazza', (() => {
+  G.player.inHouse = null; G.player.x = 0; G.player.y = 0;
+  G.player.riding = { id: 'teszt', kind: 'lo', x: 0, y: 0, a: 0, angle: 0, speed: 0, color: '#8a5a2b' };
+  const list = G.buildDrawList();
+  G.player.riding = null;
+  const hasHorse = list.some(e => e.type === 'horse' && e.self);
+  const hasRider = list.some(e => e.type === 'person' && e.rider);
+  return hasHorse && hasRider;
+})());
 
 // --- Járművek a világban ---
 check('vehiclesIn determinisztikus', (() => {
