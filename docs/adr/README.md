@@ -15,3 +15,6 @@ Itt van naplózva minden architekturális döntés: mit, miért és milyen alter
 | [0008](0008-hazak-vizualis-valtozatossaga.md) | Házak vizuális változatossága a seedből | Elfogadva | 2026-11-17 |
 | [0009](0009-mozgatott-jarmuvek-tartos-helye.md) | Mozgatott járművek tartós helye (localStorage) | Elfogadva | 2026-11-17 |
 | [0010](0010-haztipusok-es-berendezett-lakoszoba.md) | Háztípusok és berendezett lakószoba | Elfogadva | 2026-11-17 |
+| [0011](0011-hazrajz-javitas-es-nagy-ajto.md) | Házrajz javítás (kamera felőli falak) és nagy ajtó | Elfogadva | 2026-11-17 |
+| [0012](0012-fak-es-koborlo-allatok.md) | Fák (ütközéssel) és kóborló állatok | Elfogadva | 2026-11-17 |
+| [0013](0013-szoba-interakciok-es-halo-mezok.md) | Szoba-interakciók és a hold/bed hálózati mezők | Elfogadva | 2026-11-17 |

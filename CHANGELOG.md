@@ -2,6 +2,19 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.5.0 – 2026-11-17
+
+- A házak tömörek (nem átlátszók): csak a kamera felőli falak + körvonal (ADR-0011);
+  a ház ajtaja nagy és egyértelmű.
+- Fák a házak mellett, ütközéssel (ADR-0012): nem lehet átmenni rajtuk.
+- Minden háznál egy kóborló kutya vagy macska (a háza körül, a seedből + időből).
+- Szoba-interakciók (ADR-0013): az ágynál E-vel lefekvés (rövid alvás, elsötétül,
+  majd felébred), a szekrénynél E-vel tárgy felvétele (a kézben látszik, kint is),
+  az ajtónál E-vel kilépés (nagy, feliratos kijárat).
+- A kézben tartott tárgy és az ágyban fekvés a többi játékosnak is látszik: a
+  `netState`/`cleanState` most `hold` és `bed` mezőt is visz (**a szerver bővült**,
+  a `server.test.js` is).
+
 ## 0.4.0 – 2026-11-17
 
 - Hatféle háztípus a seedből (ADR-0010): lakóház, gyár, iskola, iroda, bolt,

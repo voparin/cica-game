@@ -47,6 +47,13 @@ követi.
 - Háztípusok (ADR-0010): `houseType(seed)` (lakóház/gyár/iskola/iroda/bolt/étterem),
   a speciálisok jele `houseSign` szerint az ajtó fölött; a belső `roomFor(type)` –
   a lakóház berendezett (`drawBedroom`, felirat nélkül), a többi a típus nevével.
+- Házrajz (ADR-0011): csak a kamera felőli falak (`visibleWalls`) + körvonal
+  (nem átlátszó), nagy ajtó. Fák és állatok (ADR-0012): `treesIn`/`collideTrees`
+  (ütközés), `animalFor`/`animalPose` (kóborló kutya/macska, a seedből + időből).
+- Szoba-interakciók (ADR-0013): `bedroomLayout` egy forrásból (rajz + interakció);
+  az `onUse` a szobában: ágy (E → alvás, `inBed`), szekrény (E → `holding`, egy
+  tárgy a kézben), kijárat (E). A `hold`/`bed` a hálózaton is megy (a szerver
+  `cleanState`-je átengedi), így a többiek is látják.
 - Szereplők: `drawPerson` / `drawCarSprite` / `drawHorseSprite` (árnyékkal).
 
 ## Tesztek
