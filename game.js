@@ -192,28 +192,31 @@ const ANIMAL_ROAM = 60;          // ennyit kóborol a kezdőpont körül
 function animalFor(h) {
   const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
   const color = kind === 'kutya' ? '#8a6b4a' : '#9a9a9a';
-  return { kind, color, hx: h.x + h.w / 2 + 26, hy: h.y, seed: h.seed };
+  return { kind, color, hx: h.x + h.w / 2 + 26, hy: h.y, seed: h.seed, house: { x: h.x, y: h.y, w: h.w, h: h.h } };
 }
 // determinisztikus „séta" a kezdőpont körül; fajfüggő jelleg + seedből vett fáziseltolás,
-// hogy mindegyik máshol járjon és máshogy mozogjon
+// hogy mindegyik máshol járjon és máshogy mozogjon; a ház alaprajzából kiszorítjuk (ne másszon a falra)
 function animalPose(an, t) {
   const ph1 = (an.seed % 628) / 100, ph2 = ((an.seed >>> 5) % 628) / 100;   // 0..2π fázis
   const vary = 0.75 + (an.seed % 50) / 100;            // 0.75..1.25 egyéni tempó-szorzó
+  let x, y, a;
   if (an.kind === 'macska') {
-    // cica: lassú, kis körzet, meg-megállással (dwell), kis farok-rezgéssel
+    // cica: lassú, kis körzet, meg-megállással (dwell)
     const sp = 0.5 * vary, R = ANIMAL_ROAM * 0.45;
     const ex = Math.sin(t * sp + ph1), ey = Math.sin(t * sp * 0.7 + ph2);
-    const dwellx = Math.sign(ex) * Math.pow(Math.abs(ex), 0.5);   // a szélek felé időz (megáll)
-    const dwelly = Math.sign(ey) * Math.pow(Math.abs(ey), 0.5);
-    const x = an.hx + dwellx * R, y = an.hy + dwelly * R;
-    const nx = an.hx + Math.sin(t * sp + 0.15 + ph1) * R;
-    return { x, y, a: Math.atan2(0, nx - x) };
+    const dwellx = Math.sign(ex) * Math.pow(Math.abs(ex), 0.5), dwelly = Math.sign(ey) * Math.pow(Math.abs(ey), 0.5);
+    x = an.hx + dwellx * R; y = an.hy + dwelly * R;
+    const nx = an.hx + Math.sin(t * sp + 0.15 + ph1) * R; a = Math.atan2(0, nx - x);
+  } else {
+    // kutya: fürgébb, nagyobb körzet, folyamatos körözés (eltérő frekvenciák)
+    const sp = 1.1 * vary, R = ANIMAL_ROAM * 0.9;
+    x = an.hx + Math.sin(t * sp + ph1) * R; y = an.hy + Math.cos(t * sp * 1.3 + ph2) * R * 0.8;
+    const x2 = an.hx + Math.sin(t * sp + 0.12 + ph1) * R, y2 = an.hy + Math.cos(t * sp * 1.3 + 0.12 + ph2) * R * 0.8;
+    a = Math.atan2(y2 - y, x2 - x);
   }
-  // kutya: fürgébb, nagyobb körzet, folyamatos körözés (eltérő frekvenciák)
-  const sp = 1.1 * vary, R = ANIMAL_ROAM * 0.9;
-  const x = an.hx + Math.sin(t * sp + ph1) * R, y = an.hy + Math.cos(t * sp * 1.3 + ph2) * R * 0.8;
-  const x2 = an.hx + Math.sin(t * sp + 0.12 + ph1) * R, y2 = an.hy + Math.cos(t * sp * 1.3 + 0.12 + ph2) * R * 0.8;
-  return { x, y, a: Math.atan2(y2 - y, x2 - x) };
+  // a ház a kezdőponttól balra van; tartsuk a háztól jobbra (sima, egyoldali korlát – nincs átugrás)
+  if (an.house) { const edge = an.house.x + an.house.w / 2 + 8; if (x < edge) x = edge; }
+  return { x, y, a };
 }
 function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
   const out = [];

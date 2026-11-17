@@ -201,6 +201,15 @@ check('animalPose a kezdőpont körül marad (korlátos távolság)', (() => {
   let far = 0; for (let t = 0; t < 20; t += 1.3) { const p = G.animalPose(an, t); if (Math.hypot(p.x - an.hx, p.y - an.hy) > 90) far++; }
   return far === 0;
 })());
+check('az állat sosem kerül a ház alaprajzába (nem mászik a falra)', (() => {
+  const h = G.housesIn(0, 0, 3000)[0]; const an = G.animalFor(h);
+  let inside = 0;
+  for (let t = 0; t < 40; t += 0.5) {
+    const p = G.animalPose(an, t);
+    if (Math.abs(p.x - h.x) < h.w / 2 && Math.abs(p.y - h.y) < h.h / 2) inside++;
+  }
+  return inside === 0;
+})());
 check('két állat NEM szinkronban mozog (eltérő fázis a seedből)', (() => {
   const a = { kind: 'macska', hx: 0, hy: 0, seed: 111 }, b = { kind: 'macska', hx: 0, hy: 0, seed: 222 };
   let apart = 0; for (let t = 0; t < 8; t += 0.7) { const pa = G.animalPose(a, t), pb = G.animalPose(b, t); if (Math.hypot(pa.x - pb.x, pa.y - pb.y) > 8) apart++; }
