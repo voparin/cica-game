@@ -109,9 +109,17 @@ check('minden speciális típushoz van jel, a lakóházhoz nincs', (() => {
 })());
 
 // --- Házrajz (tömör, nem átlátszó) ---
-check('visibleWalls a két kamera felőli falat adja (a -x és -y irányút)', (() => {
+check('visibleWalls a két kamera felőli falat adja (a +x és +y irányút, hátulról előre)', (() => {
   const walls = G.visibleWalls();     // oldalak nevei, hátulról előre
-  return Array.isArray(walls) && walls.length === 2 && walls.includes('nx') && walls.includes('ny');
+  return Array.isArray(walls) && walls.length === 2 && walls.includes('px') && walls.includes('py');
+})());
+check('doorSide az ajtó oldalát adja a négy érték egyikeként, a h.door helyéhez illően', (() => {
+  const base = { x: 0, y: 0, w: 100, h: 100 };
+  const top = G.doorSide({ ...base, door: { x: 0, y: -66 } });
+  const bottom = G.doorSide({ ...base, door: { x: 0, y: 66 } });
+  const left = G.doorSide({ ...base, door: { x: -66, y: 0 } });
+  const right = G.doorSide({ ...base, door: { x: 66, y: 0 } });
+  return top === 'ny' && bottom === 'py' && left === 'nx' && right === 'px';
 })());
 
 // --- Ütközés a házakkal ---

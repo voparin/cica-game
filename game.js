@@ -511,38 +511,54 @@ function houseSign(type) {
   }
 }
 
-// az izometrikus kamera a -x,-y felől néz: a két kamera felőli oldalfal a 'nx' (x = cx-hw)
-// és 'ny' (y = cy-hh). Hátulról előre: előbb 'ny', majd 'nx' (az nx van közelebb a kamerához).
-function visibleWalls() { return ['ny', 'nx']; }
+// az izometrikus kamera a -x,-y felől néz, így a kamera felőli (elülső) két oldalfal
+// a 'px' (x = cx+hw) és 'py' (y = cy+hh). Hátulról előre: előbb 'px', majd 'py' (a py van elöl).
+function visibleWalls() { return ['px', 'py']; }
+// melyik oldalon van az ajtó a h.door helye alapján: px/py (elülső, látható) vagy nx/ny (hátsó)
+function doorSide(h) {
+  const dx = h.door.x - h.x, dy = h.door.y - h.y;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? 'px' : 'nx';
+  return dy >= 0 ? 'py' : 'ny';
+}
 
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
   const poly = (pts, fill, line) => { fillIsoPoly(pts, fill); if (line) { ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.stroke(); } };
-  // csak a két kamera felőli oldalfal (hátulról előre: ny, majd nx) – így nem átlátszó
-  // ny fal (y = cy-hh)
-  poly([[h.x - hw, h.y - hh, 0], [h.x + hw, h.y - hh, 0], [h.x + hw, h.y - hh, z], [h.x - hw, h.y - hh, z]], h.wall, '#1b1410');
-  // nx fal (x = cx-hw)
-  poly([[h.x - hw, h.y - hh, 0], [h.x - hw, h.y + hh, 0], [h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z]], shade(h.wall, 0.22), '#1b1410');
+  // csak a két kamera felőli (elülső) oldalfal – hátulról előre: px, majd py
+  // px fal (x = cx+hw), a jobb oldali
+  poly([[h.x + hw, h.y - hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x + hw, h.y - hh, z]], shade(h.wall, 0.22), '#1b1410');
+  // py fal (y = cy+hh), a kamerához legközelebbi front-fal
+  poly([[h.x - hw, h.y + hh, 0], [h.x + hw, h.y + hh, 0], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.wall, '#1b1410');
   // tető
   if (h.roofType === 'lapos') {
     poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x - hw, h.y + hh, z]], h.roof, '#1b1410');
-  } else if (h.roofType === 'sator') {
+  } else if (h.roofType === 'sator') {                  // négy lapú sátortető egy csúcsba
     const pk = z + 26;
-    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, pk]], h.roof, '#1b1410');
-    poly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y - hh, z], [h.x, h.y, pk]], shade(h.roof, 0.2), '#1b1410');
-  } else {
+    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x, h.y, pk]], shade(h.roof, 0.25), '#1b1410');   // hátsó
+    poly([[h.x - hw, h.y - hh, z], [h.x - hw, h.y + hh, z], [h.x, h.y, pk]], shade(h.roof, 0.12), '#1b1410');   // bal
+    poly([[h.x + hw, h.y - hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, pk]], shade(h.roof, 0.18), '#1b1410');   // jobb
+    poly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x, h.y, pk]], h.roof, '#1b1410');                // elülső
+  } else {                                              // nyereg: gerinc az x tengely mentén (y=cy), két lap
     const pk = z + 22;
-    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], h.roof, '#1b1410');
-    poly([[h.x - hw, h.y + hh, z], [h.x - hw, h.y, pk], [h.x - hw, h.y - hh, z]], shade(h.roof, 0.2), '#1b1410');
+    poly([[h.x - hw, h.y - hh, z], [h.x + hw, h.y - hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], shade(h.roof, 0.22), '#1b1410');  // hátsó lap
+    poly([[h.x - hw, h.y + hh, z], [h.x + hw, h.y + hh, z], [h.x + hw, h.y, pk], [h.x - hw, h.y, pk]], h.roof, '#1b1410');               // elülső lap
   }
-  // NAGY, egyértelmű ajtó a front (ny) falon
-  const [dx, dy] = worldToScreen(h.x, h.y - hh, 0);
-  ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx - 15, dy - 40, 30, 40);        // világos keret
-  ctx.fillStyle = '#4a2f1c'; ctx.fillRect(dx - 11, dy - 36, 22, 36);        // ajtólap
-  ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx + 4, dy - 20, 3, 3);           // kilincs
+  // NAGY ajtó a valódi bejárat (h.door) oldalán
+  const side = doorSide(h);
+  if (side === 'py' || side === 'px') {                 // látható (elülső) falon: rárajzoljuk a nagy ajtót
+    const dwx = side === 'py' ? h.x : h.x + hw, dwy = side === 'py' ? h.y + hh : h.y;
+    const [dx, dy] = worldToScreen(dwx, dwy, 0);
+    ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx - 15, dy - 40, 30, 40);      // világos keret
+    ctx.fillStyle = '#4a2f1c'; ctx.fillRect(dx - 11, dy - 36, 22, 36);      // ajtólap
+    ctx.fillStyle = '#e8d9a0'; ctx.fillRect(dx + 4, dy - 20, 3, 3);         // kilincs
+  } else {                                              // hátsó (nem látható) falon: jelző a bejárat irányába
+    const [ax, ay] = worldToScreen(h.door.x, h.door.y, z + 18);
+    ctx.fillStyle = '#ffd34d'; ctx.beginPath(); ctx.moveTo(ax, ay + 8); ctx.lineTo(ax - 7, ay - 4); ctx.lineTo(ax + 7, ay - 4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#1b1410'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('bejárat', ax, ay - 8);
+  }
   const sign = houseSign(h.type);
   if (sign) {
-    const [lx, ly] = worldToScreen(h.x, h.y - hh, z + 6);
+    const [lx, ly] = worldToScreen(h.x, h.y + hh, z + 6);
     ctx.fillStyle = sign.color; ctx.fillRect(lx - 14, ly - 12, 28, 14);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sign.label, lx, ly - 5); ctx.textBaseline = 'alphabetic';
@@ -774,7 +790,7 @@ if (typeof global !== 'undefined') {
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     drawTree, drawAnimal,
-    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls,
+    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
