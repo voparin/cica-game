@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.3.2 – 2026-11-17
+
+- 2× szélesebb úttest (`ROAD_HALF`).
+- Az autók 2× akkorák, és a talajon fekve, menetirányba forgatva rajzolódnak
+  (`vehicleQuad` + talaj-sík izometrikus vetítés) – nincs több „dőlt" jármű.
+- A ló is a talajon áll (ugyanaz a vetítés), nem dől.
+- A korábbi `rotate+scale` megoldás nyírta a sprite-ot (ez okozta a dőlést);
+  helyette minden jármű-sarkot a világban forgatunk, majd izometriába vetítünk.
+
 ## 0.3.1 – 2026-11-17
 
 Látvány- és járműjavítások (a felhasználó jelzései alapján):
