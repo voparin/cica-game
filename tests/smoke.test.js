@@ -69,9 +69,11 @@ check('housesIn determinisztikus (ugyanaz a terület → ugyanaz a ház)', (() =
   return a.length > 0 && a.length === b.length && a[0].x === b[0].x && a[0].y === b[0].y;
 })());
 check('a ház nincs az úttesten (a háztömb belsejében van)', G.housesIn(0, 0, 1800).every(h => !G.onRoad(h.x, h.y)));
-check('a ház ajtaja a házon kívül, az út felé esik', (() => {
-  const h = G.housesIn(0, 0, 1800)[0];
-  return h.door && Math.hypot(h.door.x - h.x, h.door.y - h.y) > h.w / 2;
+check('a ház ajtaja a kamera felőli (elülső) falon van, mindig látható és megközelíthető', (() => {
+  return G.housesIn(0, 0, 3000).every(h => {
+    const front = Math.abs(h.door.x - h.x) < 1 && h.door.y > h.y;   // a py (elülső) falon, a ház alatt
+    return front && G.doorSide(h) === 'py';
+  });
 })());
 
 // --- Házak vizuális mezői ---

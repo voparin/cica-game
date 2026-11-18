@@ -65,14 +65,8 @@ function housesInBlock(gx, gy) {
     const w = special ? 120 + Math.floor(rand01(gx + c, gy + r, 1) * 50) : 80 + Math.floor(rand01(gx + c, gy + r, 1) * 30);
     const h = special ? 120 + Math.floor(rand01(gx + c, gy + r, 2) * 50) : 80 + Math.floor(rand01(gx + c, gy + r, 2) * 30);
     const cx = x0 + c * cw + cw / 2, cy = y0 + r * ch + ch / 2;
-    // az ajtó a tömb legközelebbi széle (út) felé néz
-    const toTop = cy - by, toBottom = (by + ROAD_SPACING) - cy, toLeft = cx - bx, toRight = (bx + ROAD_SPACING) - cx;
-    const m = Math.min(toTop, toBottom, toLeft, toRight);
-    let door;
-    if (m === toTop) door = { x: cx, y: cy - h / 2 - 16 };
-    else if (m === toBottom) door = { x: cx, y: cy + h / 2 + 16 };
-    else if (m === toLeft) door = { x: cx - w / 2 - 16, y: cy };
-    else door = { x: cx + w / 2 + 16, y: cy };
+    // az ajtó MINDIG a kamera felőli (elülső, py) falon: így mindig látszik és elölről megközelíthető
+    const door = { x: cx, y: cy + h / 2 + 16 };
     out.push({
       x: cx, y: cy, w, h, door, seed, type,
       wall: special ? SPECIAL_WALLS[seed % SPECIAL_WALLS.length] : HOUSE_WALLS[seed % HOUSE_WALLS.length],
@@ -856,20 +850,16 @@ function drawHouse(h) {
     for (let k = 1; k <= 3; k++) { const yy = h.y + (hh) * k / 4, zz = pk - (pk - z) * k / 4; wline([h.x - hw, yy, zz], [h.x + hw, yy, zz], sh); }
   }
   if (h.type === 'lakohaz') drawHomeDetails(h);          // otthonos jegyek: kémény + kertkapu
-  // NAGY ajtó a valódi bejárat (h.door) oldalán
-  const side = doorSide(h);
-  if (side === 'py' || side === 'px') {                 // látható (elülső) falon: a fal síkjában fekvő ajtó
-    const q = doorQuad(h, side);
+  // NAGY ajtó az elülső (py) falon – mindig látszik, a fal síkjában fekvő
+  {
+    const q = doorQuad(h, 'py');
     fillIsoPoly(q, '#e8d9a0');                           // világos keret (a teljes ajtónyílás)
-    const inset = q.map((p, i) => {                      // kicsit beljebb: az ajtólap
+    const inset = q.map(p => {                            // kicsit beljebb: az ajtólap
       const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4, cz = (q[0][2] + q[2][2]) / 2;
       return [p[0] + (cx - p[0]) * 0.18, p[1] + (cy - p[1]) * 0.18, p[2] + (cz - p[2]) * 0.18];
     });
     fillIsoPoly(inset, '#4a2f1c');                        // ajtólap
-  } else {                                              // hátsó (nem látható) falon: jelző a bejárat irányába
-    const [ax, ay] = worldToScreen(h.door.x, h.door.y, z + 18);
-    ctx.fillStyle = '#ffd34d'; ctx.beginPath(); ctx.moveTo(ax, ay + 8); ctx.lineTo(ax - 7, ay - 4); ctx.lineTo(ax + 7, ay - 4); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#1b1410'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('bejárat', ax, ay - 8);
+    const [kx, ky] = worldToScreen(h.door.x + 6, h.door.y, 10); ctx.fillStyle = '#e8d9a0'; ctx.fillRect(kx - 1, ky - 1, 3, 3);   // kilincs
   }
   const sign = houseSign(h.type);
   if (sign) {                                           // tábla a tető fölött: ikon + teljes név
