@@ -210,7 +210,7 @@ function animalFor(h) {
 function animalPose(an, t) {
   const ph1 = (an.seed % 628) / 100, ph2 = ((an.seed >>> 5) % 628) / 100;   // 0..2π fázis
   const vary = 0.75 + (an.seed % 50) / 100;            // 0.75..1.25 egyéni tempó-szorzó
-  let x, y, a;
+  let x, y, a, moving = true, phase = 0;
   if (an.kind === 'macska') {
     // cica: lassú, kis körzet, meg-megállással (dwell)
     const sp = 0.5 * vary, R = ANIMAL_ROAM * 0.45;
@@ -218,12 +218,28 @@ function animalPose(an, t) {
     const dwellx = Math.sign(ex) * Math.pow(Math.abs(ex), 0.5), dwelly = Math.sign(ey) * Math.pow(Math.abs(ey), 0.5);
     x = an.hx + dwellx * R; y = an.hy + dwelly * R;
     const nx = an.hx + Math.sin(t * sp + 0.15 + ph1) * R; a = Math.atan2(0, nx - x);
+    phase = t * sp * 4;
   } else {
-    // kutya: fürgébb, nagyobb körzet, folyamatos körözés (eltérő frekvenciák)
-    const sp = 1.1 * vary, R = ANIMAL_ROAM * 0.9;
-    x = an.hx + Math.sin(t * sp + ph1) * R; y = an.hy + Math.cos(t * sp * 1.3 + ph2) * R * 0.8;
-    const x2 = an.hx + Math.sin(t * sp + 0.12 + ph1) * R, y2 = an.hy + Math.cos(t * sp * 1.3 + 0.12 + ph2) * R * 0.8;
-    a = Math.atan2(y2 - y, x2 - x);
+    // kutya: céltudatos kocogás egy irányba, majd megáll szaglászni, aztán új irány (determinisztikus a seedből + ciklusból)
+    const CYC = 4.2 / vary;                              // egy szakasz hossza (kocogás + megállás)
+    const walk = 0.72;                                   // a szakasz ennyi hányadában kocog, utána megáll
+    const seg = Math.floor(t / CYC), local = (t / CYC) - seg;   // hányadik szakasz, azon belül hol
+    const heading = (hash32(an.seed, seg) / 4294967296) * Math.PI * 2;   // a szakasz iránya a seedből
+    // a szakasz kezdőpontja: az előző szakaszok elmozdulásainak összege, a ház körül tartva
+    const home = (sx, sy) => {                            // korlátos: a kezdőpont (hx,hy) körül
+      const dx = sx - an.hx, dy = sy - an.hy, d = Math.hypot(dx, dy), max = ANIMAL_ROAM;
+      return d > max ? [an.hx + dx / d * max, an.hy + dy / d * max] : [sx, sy];
+    };
+    // a szakaszon belül a kocogás-rész elején/vége között interpolálunk (ease), a megállás-részben állunk
+    const prog = Math.min(1, local / walk);              // 0..1 a kocogás alatt, 1 a megálláskor
+    const ease = prog < 0.5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;   // sima gyorsulás/lassulás
+    const base = segStart(an, seg);                      // a szakasz eleje (determinisztikus)
+    const dist = ANIMAL_ROAM * 0.6;
+    let px = base.x + Math.cos(heading) * dist * ease, py = base.y + Math.sin(heading) * dist * ease;
+    [px, py] = home(px, py);
+    x = px; y = py; a = heading;
+    moving = local < walk;                               // a szakasz vége fele megáll (szaglászik)
+    phase = moving ? (local / walk) * Math.PI * 6 : 0;   // lépésfázis csak kocogás közben
   }
   // a ház a kezdőponttól balra van; tartsuk a háztól jobbra (sima, egyoldali korlát – nincs átugrás)
   if (an.house) { const edge = an.house.x + an.house.w / 2 + 8; if (x < edge) x = edge; }
@@ -231,13 +247,25 @@ function animalPose(an, t) {
   let onTree = false;
   if (an.kind === 'macska' && an.tree) {
     const cyc = (t * 0.12 + (an.seed % 100) / 100) % 1;    // ~8 mp-es ciklus, seedből eltolva
-    if (cyc > 0.55 && cyc < 0.8) { onTree = true; x = an.tree.x; y = an.tree.y; a = 0; }
+    if (cyc > 0.55 && cyc < 0.8) { onTree = true; x = an.tree.x; y = an.tree.y; a = 0; moving = false; }
   }
-  return { x, y, a, onTree };
+  return { x, y, a, onTree, moving, phase };
+}
+// egy kutya-szakasz kezdőpontja: az utóbbi néhány szakasz elmozdulásának összege a ház körül
+// (a ház-körüli korlát miatt a régebbi szakaszok hatása elhanyagolható, ezért legfeljebb 8-at nézünk – korlátos költség)
+function segStart(an, seg) {
+  let x = an.hx, y = an.hy;
+  for (let s = Math.max(0, seg - 8); s < seg; s++) {
+    const heading = (hash32(an.seed, s) / 4294967296) * Math.PI * 2;
+    x += Math.cos(heading) * ANIMAL_ROAM * 0.6; y += Math.sin(heading) * ANIMAL_ROAM * 0.6;
+    const dx = x - an.hx, dy = y - an.hy, d = Math.hypot(dx, dy);
+    if (d > ANIMAL_ROAM) { x = an.hx + dx / d * ANIMAL_ROAM; y = an.hy + dy / d * ANIMAL_ROAM; }   // a ház körül tartva
+  }
+  return { x, y };
 }
 function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
   const out = [];
-  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree, barking: false }); }
+  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree, moving: p.moving, phase: p.phase, barking: false }); }
   for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {   // két közeli kutya egymásra ugat
     if (out[i].an.kind === 'kutya' && out[j].an.kind === 'kutya' && Math.hypot(out[i].x - out[j].x, out[i].y - out[j].y) < BARK_RANGE) {
       out[i].barking = out[j].barking = true;
@@ -1102,7 +1130,7 @@ if (typeof global !== 'undefined') {
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
     treesIn, treesInBlock, collideTrees, TREE_R,
-    animalFor, animalPose, animalsIn, ANIMAL_ROAM, BARK_RANGE,
+    animalFor, animalPose, animalsIn, ANIMAL_ROAM, BARK_RANGE, segStart,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,

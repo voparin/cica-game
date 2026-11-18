@@ -254,6 +254,18 @@ check('a macska és a kutya másképp mozog (eltérő pálya ugyanazzal a seedde
   let diff = 0; for (let t = 0; t < 12; t += 0.9) { const c = G.animalPose(cat, t), d = G.animalPose(dog, t); if (Math.hypot(c.x - d.x, c.y - d.y) > 3) diff++; }
   return diff >= 3;
 })());
+check('a kutya mozgása sima (nincs nagy ugrás két közeli időpont közt)', (() => {
+  const dog = { kind: 'kutya', hx: 0, hy: 0, seed: 777 };
+  let maxStep = 0, prev = null;
+  for (let t = 0; t < 30; t += 0.1) { const p = G.animalPose(dog, t); if (prev) maxStep = Math.max(maxStep, Math.hypot(p.x - prev.x, p.y - prev.y)); prev = p; }
+  return maxStep < 12;                                   // 0.1 mp alatt max ~12px → nincs teleport/rángás
+})());
+check('a kutya időnként megáll (moving=false) és a póz ad lépésfázist (phase)', (() => {
+  const dog = { kind: 'kutya', hx: 0, hy: 0, seed: 321 };
+  let paused = 0; for (let t = 0; t < 40; t += 0.3) { const p = G.animalPose(dog, t); if (p.moving === false) paused++; }
+  const sample = G.animalPose(dog, 1);
+  return paused > 0 && typeof sample.phase === 'number';
+})());
 check('két közeli kutya ugat (barking), és a küszöb (BARK_RANGE) létezik', (() => {
   if (typeof G.BARK_RANGE !== 'number' || G.BARK_RANGE <= 0) return false;
   const dogs = G.animalsIn(0, 0, 6000).filter(g => g.an.kind === 'kutya');
