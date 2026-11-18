@@ -2,6 +2,16 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.10.0 – 2026-11-18
+
+- Bolt: a polcokon mindig látszik az áru – répa, 3 paradicsom, 3 virsli, 2 uborka
+  (nincs leülés, csak kijárat E-vel).
+- Iroda: asztalok; az asztalhoz E-vel leülve egy nyitott könyv és egy ceruza van előtted.
+- Gyár: asztal + szék; az asztalhoz E-vel leülve horgolni lehet (fonalgombolyag,
+  horgolótű, félkész darab).
+- Ezzel mind a hat háztípusnak (lakóház, iskola, étterem, bolt, iroda, gyár) van
+  berendezett belseje.
+
 ## 0.9.0 – 2026-11-18
 
 - Az étterem belseje berendezett: 3-4 asztal. Az asztalhoz érve E-vel leülsz, és

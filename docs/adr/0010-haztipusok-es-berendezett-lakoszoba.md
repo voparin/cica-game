@@ -29,7 +29,13 @@ mintájára).
 - **Étterem (0.9.0):** `roomFor` `dining: true`; `restaurantLayout` 3-4 asztallal;
   `drawRestaurant` rajzolja. Az asztalnál E-vel leülés (`player.sitting` újrahasznosítva),
   ekkor a terítés jelenik meg (`drawMeal`: hús a tányéron, répa, pohár víz).
-  A maradék típus (gyár/iroda/bolt) feliratos marad.
+- **Bolt / iroda / gyár (0.10.0):** a bolt (`shop: true`) polcokon mutatja az árut
+  (`shopLayout`/`drawShop`: répa, 3 paradicsom, 3 virsli, 2 uborka) – mindig látszik,
+  nincs leülés. Az iroda és a gyár (`work: 'iroda'` / `'gyar'`) asztalokat kap
+  (`workLayout`/`drawWork`), és az asztalnál E-vel leülve az iroda nyitott könyvet
+  + ceruzát (`drawOpenBook` + `drawItem('ceruza')`), a gyár horgolást (`drawCrochet`:
+  fonalgombolyag, horgolótű, félkész darab) mutat. Ezzel mind a hat típusnak van
+  berendezett belseje.
 - Az **ütközés a típustól független** (a `w`/`h` alaprajz dönt).
 
 ## Elvetett alternatívák
@@ -38,7 +44,7 @@ mintájára).
 - Textúra-képek a házakhoz/bútorokhoz: fájl-függőség (ADR-0001 ellen).
 
 ## Következmények
-- (+) Változatos, kívülről felismerhető város; a lakóház és az iskola belül berendezett.
+- (+) Változatos, kívülről felismerhető város; mind a hat típusnak berendezett a belseje.
 - (−) A típusoknak még nincs valódi funkciójuk (a bolt nem ad el; az iskolai könyv
-  dísz, nincs kvíz); a maradék három belseje egyelőre csak a típus neve. A
-  berendezés fix (nem a seedből változik) – később bővíthető.
+  és a gyári horgolás dísz, nincs kvíz/termelés). A berendezés fix (nem a seedből
+  változik) – később bővíthető.
