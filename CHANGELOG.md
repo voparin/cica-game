@@ -2,6 +2,13 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.12.1 – 2026-11-18
+
+- Javítás: a nagy speciális épületekbe (gyár, iskola, iroda, bolt, étterem) megint
+  be lehet lépni. A `nearestDoor` a ház KÖZÉPpontja szerint szűrt, de a nagyobbra
+  nőtt épületeknél az ajtó messzebb került a középtől, mint a keresési sugár –
+  ezért a belépés nem talált házat. A keresés most tágabb sugarú.
+
 ## 0.12.0 – 2026-11-18
 
 - A kutyák élethűbbek: valódi 4 lábú forma (test, fej, fülek, farok) láb-animációval,
