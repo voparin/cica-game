@@ -54,6 +54,8 @@ function fileStore(dir = process.env.PROFILE_DIR || path.join(ROOT, 'data')) {
     async update(id, fields) { if (!db.profiles[id]) return false; Object.assign(db.profiles[id], fields); flush(); return true; },
     async remove(id) { delete db.profiles[id]; flush(); return true; },
     async secret() { if (!db.secret) { db.secret = crypto.randomBytes(32).toString('hex'); flush(); } return db.secret; },
+    async getItems() { return db.items || null; },
+    async setItems(json) { db.items = json; flush(); return true; },
   };
 }
 
@@ -85,6 +87,13 @@ function firestoreStore() {                         // Firestore REST API; a hoz
       const c = await doc('POST', 'config?documentId=secret', toF({ value }));
       if (c.ok) return value;
       return fromF(await (await doc('GET', 'config/secret')).json()).value;   // közben más hozta létre
+    },
+    async getItems() { const r = await doc('GET', 'config/items'); if (!r.ok) return null; return fromF(await r.json()).value || null; },
+    async setItems(json) {
+      const a = await auth();
+      const r = await fetch(a.base + 'config/items?currentDocument.exists=true', { method: 'PATCH', headers: a.headers, body: JSON.stringify(toF({ value: json })), signal: to() });
+      if (r.ok) return true;
+      const c = await doc('POST', 'config?documentId=items', toF({ value: json })); return c.ok;
     },
   };
 }

@@ -37,6 +37,11 @@ const until = async (cond, ms = 3000) => { const end = Date.now() + ms; while (D
   check('a maszkolatlan kliens-keretet elutasítja (RFC 6455)', decodeFrames(Buffer.from([0x81, 2, 0x68, 0x69])).bad === true);
   check('a túl nagy vezérlőkeretet elutasítja', decodeFrames(Buffer.concat([Buffer.from([0x89, 0x80 | 126, 0, 200, 1, 2, 3, 4]), Buffer.alloc(200)])).bad === true);
 
+  const st2 = fileStore(fs.mkdtempSync(path.join(os.tmpdir(), 'cica-items-')));
+  await st2.setItems('[{"id":1,"name":"maci","x":5,"y":6}]');
+  check('a store elmenti és visszaadja a letett tárgyak listáját', (await st2.getItems()) === '[{"id":1,"name":"maci","x":5,"y":6}]');
+  check('üres store esetén a tárgylista null', (await fileStore(fs.mkdtempSync(path.join(os.tmpdir(), 'cica-empty-'))).getItems()) == null);
+
   // élő szerver két klienssel
   const { server, players } = createServer(fileStore(DIR), googleVerifier(GOOGLE_CLIENT_ID, async () => [G_JWK]));
   await new Promise(r => server.listen(0, r));
