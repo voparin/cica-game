@@ -308,6 +308,15 @@ check('roomFor a lakóháznak berendezést ad (nincs felirat), a többinek felir
   const lak = G.roomFor('lakohaz'), gyar = G.roomFor('gyar');
   return lak.furnished === true && !lak.label && gyar.furnished === false && typeof gyar.label === 'string' && gyar.label.length > 0;
 })());
+check('roomFor az iskolát school jelzővel adja (nem furnished)', (() => {
+  const r = G.roomFor('iskola');
+  return r.school === true && r.furnished === false && r.label === 'Iskola';
+})());
+check('schoolLayout 4-6 padot, táblát és kijáratot ad, mind a szobán belül', (() => {
+  const L = G.schoolLayout(360, 260);
+  const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
+  return Array.isArray(L.desks) && L.desks.length >= 4 && L.desks.length <= 6 && L.desks.every(inside) && L.board && inside(L.board) && L.exit && inside(L.exit);
+})());
 check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.player.riding = null; G.player.inHouse = null;
   const h = G.housesIn(0, 0, 3000)[0];
