@@ -37,6 +37,7 @@ function onRoad(x, y) {
 // Házak vizuális változatossága (ADR-0008) – a seedből, az ütközéstől függetlenül.
 const HOUSE_WALLS = ['#b85c4a', '#d9a05b', '#6f8f6a', '#5b7fa6', '#c9b47e', '#9a6fa0', '#c77f9e', '#7a8a99'];
 const HOUSE_ROOFS = ['#8a3b2e', '#5a4632', '#394a5a', '#6b5641', '#3f5e46'];
+const SPECIAL_WALLS = ['#8a8f98', '#9aa6b2', '#7f93a8', '#86a0a6', '#9c9aa8'];   // hűvös/semleges: a speciális épületeknek
 const ROOF_TYPES = ['nyereg', 'sator', 'lapos'];
 const HOUSE_TYPES = ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'];
 // determinisztikus típus a seedből: a lakóház ~50%, a másik öt a maradékon osztozik
@@ -57,8 +58,12 @@ function housesInBlock(gx, gy) {
   const cols = 2, rows = 2, cw = inner / cols, ch = inner / rows;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     if (rand01(gx * 7 + c, gy * 7 + r, 11) < 0.25) continue;   // néhány üres telek
-    const w = 90 + Math.floor(rand01(gx + c, gy + r, 1) * 40);
-    const h = 90 + Math.floor(rand01(gx + c, gy + r, 2) * 40);
+    const seed = hash32(gx * 101 + c, gy * 101 + r);
+    const type = houseType(seed);
+    const special = type !== 'lakohaz';
+    // lakóház: kisebb/alacsonyabb + meleg paletta; speciális épület: nagyobb/magasabb + hűvös paletta
+    const w = special ? 120 + Math.floor(rand01(gx + c, gy + r, 1) * 50) : 80 + Math.floor(rand01(gx + c, gy + r, 1) * 30);
+    const h = special ? 120 + Math.floor(rand01(gx + c, gy + r, 2) * 50) : 80 + Math.floor(rand01(gx + c, gy + r, 2) * 30);
     const cx = x0 + c * cw + cw / 2, cy = y0 + r * ch + ch / 2;
     // az ajtó a tömb legközelebbi széle (út) felé néz
     const toTop = cy - by, toBottom = (by + ROAD_SPACING) - cy, toLeft = cx - bx, toRight = (bx + ROAD_SPACING) - cx;
@@ -68,14 +73,12 @@ function housesInBlock(gx, gy) {
     else if (m === toBottom) door = { x: cx, y: cy + h / 2 + 16 };
     else if (m === toLeft) door = { x: cx - w / 2 - 16, y: cy };
     else door = { x: cx + w / 2 + 16, y: cy };
-    const seed = hash32(gx * 101 + c, gy * 101 + r);
     out.push({
-      x: cx, y: cy, w, h, door, seed,
-      wall: HOUSE_WALLS[seed % HOUSE_WALLS.length],
+      x: cx, y: cy, w, h, door, seed, type,
+      wall: special ? SPECIAL_WALLS[seed % SPECIAL_WALLS.length] : HOUSE_WALLS[seed % HOUSE_WALLS.length],
       roof: HOUSE_ROOFS[(seed >>> 3) % HOUSE_ROOFS.length],
-      roofType: ROOF_TYPES[(seed >>> 6) % ROOF_TYPES.length],
-      height: 34 + ((seed >>> 9) % 4) * 14,              // 34..76 px „magasság" (izo z)
-      type: houseType(seed),
+      roofType: special ? 'lapos' : ROOF_TYPES[(seed >>> 6) % ROOF_TYPES.length],   // a speciális épület lapos tetős (hivatalos jelleg)
+      height: special ? 70 + ((seed >>> 9) % 3) * 16 : 34 + ((seed >>> 9) % 3) * 12,   // speciális magasabb
     });
   }
   return out;
@@ -1035,7 +1038,7 @@ if (typeof global !== 'undefined') {
     get localDropped() { return localDropped; }, dropHere, takeItem, groundItems,
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
-    HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,
+    HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES, SPECIAL_WALLS,
     HOUSE_TYPES, houseType, houseSign,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,

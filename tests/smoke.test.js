@@ -75,9 +75,11 @@ check('a ház ajtaja a házon kívül, az út felé esik', (() => {
 })());
 
 // --- Házak vizuális mezői ---
-check('a ház falszíne és tetőszíne a palettából való', (() => {
-  const h = G.housesIn(0, 0, 2400)[0];
-  return G.HOUSE_WALLS.includes(h.wall) && G.HOUSE_ROOFS.includes(h.roof);
+check('a ház falszíne a típusának megfelelő palettából, a tetőszíne a tető-palettából való', (() => {
+  return G.housesIn(0, 0, 2400).every(h => {
+    const wallOk = h.type === 'lakohaz' ? G.HOUSE_WALLS.includes(h.wall) : G.SPECIAL_WALLS.includes(h.wall);
+    return wallOk && G.HOUSE_ROOFS.includes(h.roof);
+  });
 })());
 check('a tetőtípus a három érték egyike, a magasság pozitív', (() => {
   return G.housesIn(0, 0, 3000).every(h => ['nyereg', 'sator', 'lapos'].includes(h.roofType) && h.height > 0);
@@ -98,6 +100,16 @@ check('a lakóház a leggyakoribb típus', (() => {
 })());
 check('minden háznak van type mezője (a hat érték egyike)', (() => {
   return G.housesIn(0, 0, 3000).every(h => ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem'].includes(h.type));
+})());
+check('a lakóházak átlagosan kisebbek, mint a speciális épületek', (() => {
+  const hs = G.housesIn(0, 0, 6000);
+  const avg = sel => { const a = hs.filter(sel); return a.reduce((s, h) => s + h.w + h.h, 0) / (a.length || 1); };
+  return avg(h => h.type === 'lakohaz') < avg(h => h.type !== 'lakohaz');
+})());
+check('a speciális épület fala a saját (hűvös) palettából való, nem a lakó-palettából', (() => {
+  const sp = G.housesIn(0, 0, 6000).find(h => h.type !== 'lakohaz');
+  const lak = G.housesIn(0, 0, 6000).find(h => h.type === 'lakohaz');
+  return G.SPECIAL_WALLS.includes(sp.wall) && G.HOUSE_WALLS.includes(lak.wall);
 })());
 check('houseSign a típushoz címkét és színt ad', (() => {
   const s = G.houseSign('gyar');
