@@ -427,6 +427,19 @@ check('drawSchool létezik és nem dob hibát (ülve és állva)', (() => {
   let ok = true; try { G.drawInterior(); G.player.sitting = 0; G.drawInterior(); } catch (e) { ok = false; console.error(e); }
   G.player.sitting = null; G.leaveHouse(); return ok;
 })());
+check('a bolt/iroda/gyár belseje nem dob hibát (ülve is), és a rajzolók léteznek', (() => {
+  if (typeof G.drawShop !== 'function' || typeof G.drawWork !== 'function' || typeof G.drawCrochet !== 'function') return false;
+  let ok = true;
+  for (const type of ['bolt', 'iroda', 'gyar']) {
+    const h = G.housesIn(0, 0, 9000).find(x => x.type === type);
+    if (!h) continue;
+    G.player.riding = null; G.enterHouse(h); G.player.sitting = null;
+    try { G.drawInterior(); G.player.sitting = 0; G.drawInterior(); } catch (e) { ok = false; console.error(e); }
+    G.player.sitting = null; G.leaveHouse();
+  }
+  try { G.drawShop(0, 0, 360, 260); G.drawWork(0, 0, 360, 260); G.drawCrochet(100, 100); } catch (e) { ok = false; console.error(e); }
+  return ok;
+})());
 check('a speciális típusok belseje sem dob hibát (mind az 5)', (() => {
   let ok = true;
   for (const t of ['gyar', 'iskola', 'iroda', 'bolt', 'etterem']) {

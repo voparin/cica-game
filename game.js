@@ -538,6 +538,37 @@ function drawMeal(cx, cy) {
   ctx.fillStyle = '#bfe0ff'; ctx.fillRect(cx - 42, cy - 12, 12, 16);
   ctx.strokeStyle = '#8fb8dd'; ctx.lineWidth = 1; ctx.strokeRect(cx - 42, cy - 12, 12, 16);
 }
+// egy bolti áru kis ikonja
+function drawGood(sx, sy, name) {
+  if (name === 'repa') { ctx.fillStyle = '#e07b2c'; ctx.beginPath(); ctx.moveTo(sx - 5, sy - 7); ctx.lineTo(sx + 5, sy - 3); ctx.lineTo(sx - 4, sy + 7); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#3f7d46'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx - 5, sy - 7); ctx.lineTo(sx - 8, sy - 12); ctx.stroke(); }
+  else if (name === 'paradicsom') { ctx.fillStyle = '#d6342b'; ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#3f7d46'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy - 6); ctx.lineTo(sx, sy - 9); ctx.stroke(); }
+  else if (name === 'virsli') { ctx.fillStyle = '#c9705a'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 3.5, 0.4, 0, Math.PI * 2); ctx.fill(); }
+  else if (name === 'uborka') { ctx.fillStyle = '#3f7d46'; ctx.beginPath(); ctx.ellipse(sx, sy, 9, 3.5, 0.5, 0, Math.PI * 2); ctx.fill(); }
+}
+// a bolt: polcok + az áru rajtuk (répa, paradicsom, virsli, uborka)
+function drawShop(ox, oy, rw, rh) {
+  const L = shopLayout(rw, rh);
+  for (const s of L.shelves) { ctx.fillStyle = '#6b5641'; ctx.fillRect(ox + s.x - s.w / 2, oy + s.y - s.h / 2, s.w, s.h); }
+  for (const g of L.goods) drawGood(ox + g.x, oy + g.y, g.name);
+}
+// iroda/gyár: asztalok + székek
+function drawWork(ox, oy, rw, rh) {
+  const L = workLayout(rw, rh);
+  for (const t of L.tables) {
+    ctx.fillStyle = '#7a6a52'; ctx.fillRect(ox + t.x - t.w / 2, oy + t.y - t.h / 2, t.w, t.h);          // asztallap
+    ctx.fillStyle = '#5a4d3a'; ctx.fillRect(ox + t.x - t.w / 2, oy + t.y + t.h / 2 - 4, t.w, 4);        // asztal-él
+    ctx.fillStyle = '#4a4036'; ctx.fillRect(ox + t.x - 8, oy + t.y + t.h / 2 + 4, 16, 10);              // szék
+  }
+}
+// horgolás a játékos előtt: fonalgombolyag + horgolótű + félkész darab
+function drawCrochet(cx, cy) {
+  ctx.fillStyle = '#d98a3a'; ctx.beginPath(); ctx.arc(cx - 14, cy, 9, 0, Math.PI * 2); ctx.fill();      // fonalgombolyag
+  ctx.strokeStyle = '#b06f28'; ctx.lineWidth = 1;
+  for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(cx - 23, cy + i * 3); ctx.lineTo(cx - 5, cy + i * 3); ctx.stroke(); }   // fonalvonalak
+  ctx.fillStyle = '#e8d9c0'; ctx.fillRect(cx + 2, cy - 6, 20, 12);                                      // félkész horgolt darab
+  ctx.strokeStyle = '#c9b48f'; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(cx + 2 + i * 5, cy - 6); ctx.lineTo(cx + 2 + i * 5, cy + 6); ctx.stroke(); }
+  ctx.strokeStyle = '#9a9a9a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 24, cy + 6); ctx.lineTo(cx + 34, cy - 4); ctx.stroke();   // horgolótű
+}
 function drawInterior() {
   const r = player.inHouse;
   ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
@@ -549,6 +580,8 @@ function drawInterior() {
   if (r.room && r.room.furnished) drawBedroom(ox, oy, r.rw, r.rh);          // lakóház: berendezés (felirat nélkül)
   else if (r.room && r.room.school) drawSchool(ox, oy, r.rw, r.rh);         // iskolaterem: padok + tábla
   else if (r.room && r.room.dining) drawRestaurant(ox, oy, r.rw, r.rh);     // étterem: asztalok
+  else if (r.room && r.room.shop) drawShop(ox, oy, r.rw, r.rh);            // bolt: polcok + áru
+  else if (r.room && r.room.work) drawWork(ox, oy, r.rw, r.rh);            // iroda/gyár: asztalok
   else if (r.room && r.room.label) {                                        // egyéb speciális ház: a típus neve középen
     ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
@@ -566,6 +599,11 @@ function drawInterior() {
     const T = restaurantLayout(r.rw, r.rh), t = T.tables[player.sitting] || T.tables[0];
     drawPerson(ox + t.x, oy + t.y - 14, 0, player.color, player.name, player.holding);   // az asztalnál ülve
     drawMeal(ox + t.x, oy + t.y);                                                         // előtte a terítés (hús, répa, víz)
+  } else if (player.sitting != null && r.room && r.room.work) {
+    const T = workLayout(r.rw, r.rh), t = T.tables[player.sitting] || T.tables[0];
+    drawPerson(ox + t.x, oy + t.y - 14, 0, player.color, player.name, player.holding);   // az asztalnál ülve
+    if (r.room.work === 'iroda') { drawOpenBook(ox + t.x - 10, oy + t.y); drawItem(ox + t.x + 22, oy + t.y, 'ceruza'); }   // iroda: nyitott könyv + ceruza
+    else drawCrochet(ox + t.x, oy + t.y);                                                 // gyár: horgolás
   } else {
     drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name, player.holding);
   }
@@ -1007,7 +1045,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout, drawShop, drawWork, drawCrochet, drawGood,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
