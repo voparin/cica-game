@@ -50,6 +50,19 @@ function houseType(seed) {
 // Egy háztömb (két szomszédos rácsvonal közötti négyzet) determinisztikus házai.
 // A tömböt a bal-felső sarkának rácsindexe (gx, gy) azonosítja.
 const HOUSE_MARGIN = 70;         // a tömb szélétől (úttól) befelé ennyivel kezdődnek a házak
+// takarja-e az „o" ház a „h" ház ajtaját? (o a kamerához közelebb van ÉS a vetített ajtóra lóg)
+// a kamera a -x,-y felől néz: a door a py falon (h alatt); egy előtte álló ház (nagyobb x+y) takar.
+function occludesDoor(o, h) {
+  if (o === h) return false;
+  if (o.x + o.y <= h.x + h.y) return false;              // o nincs a kamerához közelebb (nem takarhat)
+  // az ajtó képernyő-pozíciója fölé lóg-e o alaprajza (kis ráhagyással)
+  const pad = 14;
+  return Math.abs(o.x - h.door.x) < o.w / 2 + pad && Math.abs(o.y - h.door.y) < o.h / 2 + pad;
+}
+// egy fa a ház ajtaja elé esik-e (lombja eltakarná)
+function treeBlocksDoor(t, h) {
+  return Math.hypot(t.x - h.door.x, t.y - h.door.y) < 46;   // a fa (törzs+lomb) túl közel az ajtóhoz
+}
 function housesInBlock(gx, gy) {
   const bx = gx * ROAD_SPACING, by = gy * ROAD_SPACING;     // a tömb bal-felső sarka (rácsvonal)
   const x0 = bx + HOUSE_MARGIN, y0 = by + HOUSE_MARGIN;
@@ -75,7 +88,8 @@ function housesInBlock(gx, gy) {
       height: special ? 70 + ((seed >>> 9) % 3) * 16 : 34 + ((seed >>> 9) % 3) * 12,   // speciális magasabb
     });
   }
-  return out;
+  // a takart (hátsó) házat kihagyjuk: ha az ajtaját egy előtte álló ház eltakarná
+  return out.filter(h => !out.some(o => occludesDoor(o, h)));
 }
 // a (cx, cy) körüli sugárban lévő összes ház (csak a közeli tömböket nézzük)
 function housesIn(cx, cy, radius) {
@@ -164,7 +178,10 @@ function treesInBlock(gx, gy) {
     if (onRoad(x, y)) continue;                          // ne az úton
     out.push({ x, y, r: TREE_R, big: rand01(gx + i, gy, 73) > 0.5 });
   }
-  return out;
+  // a ház ajtaja elé eső fát kihagyjuk (a szomszéd tömbök házait is nézve, mert az ajtó átnyúlhat)
+  const nearbyHouses = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) for (const h of housesInBlock(gx + dx, gy + dy)) nearbyHouses.push(h);
+  return out.filter(t => !nearbyHouses.some(h => treeBlocksDoor(t, h)));
 }
 function treesIn(cx, cy, radius) {
   const out = [];
@@ -1217,7 +1234,7 @@ if (typeof global !== 'undefined') {
     HOUSE_TYPES, houseType, houseSign,
     pushOutOfRect, collideHouses,
     vehiclesIn, vehiclesInCell,
-    treesIn, treesInBlock, collideTrees, TREE_R,
+    treesIn, treesInBlock, collideTrees, TREE_R, occludesDoor, treeBlocksDoor,
     animalFor, animalPose, animalsIn, ANIMAL_ROAM, BARK_RANGE, segStart,
     movedVehicles, setVehicleMoved, saveVehicles, loadVehicles,
     updateVehiclePhysics, VEH,

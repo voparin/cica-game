@@ -75,6 +75,14 @@ check('a ház ajtaja a kamera felőli (elülső) falon van, mindig látható és
     return front && G.doorSide(h) === 'py';
   });
 })());
+check('egyetlen ház ajtaját sem takarja egy másik ház (a takart házat kihagyjuk)', (() => {
+  const hs = G.housesIn(0, 0, 9000);
+  return hs.every(h => !hs.some(o => o !== h && G.occludesDoor(o, h)));
+})());
+check('egyetlen fa sem esik egy ház ajtaja elé (a fát kihagyjuk)', (() => {
+  const hs = G.housesIn(0, 0, 4000);
+  return G.treesIn(0, 0, 4000).every(t => !hs.some(h => G.treeBlocksDoor(t, h)));
+})());
 
 // --- Házak vizuális mezői ---
 check('a ház falszíne a típusának megfelelő palettából, a tetőszíne a tető-palettából való', (() => {
