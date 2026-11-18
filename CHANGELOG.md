@@ -2,6 +2,12 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.12.5 – 2026-11-18
+
+- A lakószoba szekrénye most nyitott, látható polcokkal, és a tárgyak (könyv,
+  társas, ceruzák, maci) a polcokon ülnek – nem lógnak ki a szobából. A könyv
+  (lila) is jól látszik a nyitott, világos belsőben.
+
 ## 0.12.4 – 2026-11-18
 
 - Javítás: a belső szoba mérete néha hibásan nagyon kicsi lett (a seed ELŐJELES
