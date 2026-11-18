@@ -301,7 +301,7 @@ function animalsIn(cx, cy, radius) {                     // a közeli házak ál
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
-const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0, inBed: false, holding: '', sleepT: 0, sitting: null };
+const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0, inBed: false, holding: '', sleepT: 0, sitting: null, schoolWord: '', schoolMath: [] };
 const keys = Object.create(null);
 window.addEventListener('keydown', e => {
   if ((e.key === 'e' || e.key === 'E') && !keys._e) { keys._e = true; onUse(); }
@@ -399,6 +399,7 @@ function enterHouse(h) {
   player.inHouse = { house: h, type: h.type || 'lakohaz', room: roomFor(h.type || 'lakohaz'), rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
   player.ix = rw / 2; player.iy = rh - 40;               // a szobában, a kijárat közelében
   player.sitting = null; player.inBed = false;           // belépéskor állva kezdünk
+  if (player.inHouse.room.school) { player.schoolMath = makeMathProblems(); player.schoolWord = randomWord(); }   // iskola: belépéskor új matek + szó
 }
 function leaveHouse() {
   const b = player.inHouse.back;
@@ -410,13 +411,14 @@ function onUse() {
     if (player.inBed) return;                            // alvás alatt nincs más
     const r = player.inHouse, L = bedroomLayout(r.rw, r.rh);
     const near = (z, d) => Math.hypot(player.ix - z.x, player.iy - z.y) < d;
-    if (r.room && r.room.school) {                       // iskolaterem: pad / kijárat
+    if (r.room && r.room.school) {                       // iskolaterem: pad / tábla / kijárat
       if (player.sitting != null) { player.sitting = null; return; }   // ül → feláll
       if (near(L.exit, 40)) { leaveHouse(); return; }
       const S = schoolLayout(r.rw, r.rh);
+      if (near(S.board, 52)) { player.schoolMath = makeMathProblems(); return; }   // táblánál E → új matek
       let bi = -1, bd = 40;
       for (let i = 0; i < S.desks.length; i++) { const d = Math.hypot(player.ix - S.desks[i].x, player.iy - S.desks[i].y); if (d < bd) { bd = d; bi = i; } }
-      if (bi >= 0) { player.sitting = bi; return; }
+      if (bi >= 0) { player.sitting = bi; player.schoolWord = randomWord(); return; }   // padhoz ülve → új szó
       if (near(L.exit, 60)) leaveHouse();
       return;
     }

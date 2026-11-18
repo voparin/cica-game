@@ -496,6 +496,21 @@ check('iskolában a padnál E-re leül, a kijáratnál E-re kilép', (() => {
   const left = !G.player.inHouse;
   return sat && stood && left;
 })());
+check('iskolába lépve van matek a táblán, padhoz ülve szó jelenik meg, a táblánál E új matekot ad', (() => {
+  G.player.riding = null; G.player.inHouse = null; G.player.sitting = null;
+  const h = G.housesIn(0, 0, 6000).find(x => x.type === 'iskola');
+  if (!h) return true;
+  G.enterHouse(h);
+  const hasMath = Array.isArray(G.player.schoolMath) && G.player.schoolMath.length >= 3;
+  const L = G.schoolLayout(G.player.inHouse.rw, G.player.inHouse.rh);
+  G.player.ix = L.desks[0].x; G.player.iy = L.desks[0].y; G.onUse();
+  const word = G.player.schoolWord, wordOk = G.SCHOOL_WORDS.includes(word) && G.player.sitting === 0;
+  G.onUse();                                              // feláll
+  G.player.ix = L.board.x; G.player.iy = L.board.y + 6;
+  let changed = false; for (let k = 0; k < 10 && !changed; k++) { const before = JSON.stringify(G.player.schoolMath); G.onUse(); if (JSON.stringify(G.player.schoolMath) !== before) changed = true; }
+  G.leaveHouse();
+  return hasMath && wordOk && changed;
+})());
 check('étteremben az asztalnál E-re leül, a kijáratnál E-re kilép', (() => {
   G.player.riding = null; G.player.inHouse = null; G.player.sitting = null;
   const h = G.housesIn(0, 0, 6000).find(x => x.type === 'etterem');
