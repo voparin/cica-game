@@ -565,15 +565,32 @@ function drawSchool(ox, oy, rw, rh) {
     ctx.fillStyle = '#5a4630'; ctx.fillRect(ox + d.x - d.w / 2, oy + d.y + d.h / 2 - 4, d.w, 4);        // ülőke/él
   }
 }
-// nyitott könyv (két lap + gerinc), a lapokon az eddig tanult betűk
-const BOOK_LETTERS = ['A', 'O', 'I', 'M', 'E'];
-function drawOpenBook(cx, cy) {
+// nyitott könyv (két lap + gerinc); a lapokon egy értelmes szó a tanult betűkből
+const SCHOOL_WORDS = ['mama', 'ami', 'ima', 'íme', 'eme', 'mami', 'mém', 'máma', 'mi', 'ó', 'ím'];
+function randomWord() { return SCHOOL_WORDS[Math.floor(Math.random() * SCHOOL_WORDS.length)]; }
+// 3-4 matek példa a táblára: összeadás/kivonás 1–10 operandusokkal, 0–10 eredménnyel; némelyik kész, némelyik befejezetlen
+function makeMathProblems() {
+  const n = 3 + Math.floor(Math.random() * 2);           // 3 vagy 4
+  const out = [];
+  let guard = 0;
+  while (out.length < n && guard++ < 200) {
+    const op = Math.random() < 0.5 ? '+' : '-';
+    const a = 1 + Math.floor(Math.random() * 10), b = 1 + Math.floor(Math.random() * 10);
+    const res = op === '+' ? a + b : a - b;
+    if (res < 0 || res > 10) continue;                   // az eredmény maradjon 0–10 között
+    out.push({ a, op, b, answer: res, done: Math.random() < 0.5 });
+  }
+  if (!out.some(p => p.done)) out[0].done = true;         // legyen legalább egy kész
+  if (!out.some(p => !p.done)) out[out.length - 1].done = false;   // és legalább egy befejezetlen
+  return out;
+}
+function drawOpenBook(cx, cy, word) {
+  word = word || SCHOOL_WORDS[0];
   ctx.fillStyle = '#6b4a30'; ctx.fillRect(cx - 34, cy - 2, 68, 6);                 // könyvgerinc/alap
   ctx.fillStyle = '#fbf6e9'; ctx.fillRect(cx - 32, cy - 22, 30, 22); ctx.fillRect(cx + 2, cy - 22, 30, 22);   // két lap
   ctx.strokeStyle = '#caa'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy - 22); ctx.lineTo(cx, cy); ctx.stroke();   // gerincvonal
-  ctx.fillStyle = '#1b1410'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const left = BOOK_LETTERS.slice(0, 3).join(' '), right = BOOK_LETTERS.slice(3).join(' ');
-  ctx.fillText(left, cx - 17, cy - 11); ctx.fillText(right, cx + 17, cy - 11);
+  ctx.fillStyle = '#1b1410'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(word, cx, cy - 11);                         // a szó a nyitott könyvön
   ctx.textBaseline = 'alphabetic';
 }
 function drawRestaurant(ox, oy, rw, rh) {
@@ -1273,7 +1290,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout, drawShop, drawWork, drawCrochet, drawGood, drawRoomHeader,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, SCHOOL_WORDS, randomWord, makeMathProblems, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout, drawShop, drawWork, drawCrochet, drawGood, drawRoomHeader,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,

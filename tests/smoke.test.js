@@ -387,6 +387,25 @@ check('schoolLayout 4-6 padot, táblát és kijáratot ad, mind a szobán belül
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
   return Array.isArray(L.desks) && L.desks.length >= 4 && L.desks.length <= 6 && L.desks.every(inside) && L.board && inside(L.board) && L.exit && inside(L.exit);
 })());
+check('SCHOOL_WORDS minden szava csak a tanult betűkből áll (a,o,i,m,e + ékezetesek)', (() => {
+  const allowed = 'aoimeáóíéöőüű'.split('');   // a tanult betűk kis- és ékezetes alakjai
+  return Array.isArray(G.SCHOOL_WORDS) && G.SCHOOL_WORDS.length >= 6 &&
+    G.SCHOOL_WORDS.every(w => w.length >= 1 && w.toLowerCase().split('').every(ch => 'oóöőiíaáeému'.includes(ch) || allowed.includes(ch)));
+})());
+check('makeMathProblems 3-4 példát ad: 1–10 operandusok, 0–10 eredmény, van kész és befejezetlen is', (() => {
+  for (let k = 0; k < 20; k++) {
+    const ps = G.makeMathProblems();
+    if (!Array.isArray(ps) || ps.length < 3 || ps.length > 4) return false;
+    for (const p of ps) {
+      if (p.a < 1 || p.a > 10 || p.b < 1 || p.b > 10) return false;
+      const res = p.op === '+' ? p.a + p.b : p.a - p.b;
+      if (res < 0 || res > 10) return false;
+      if (p.done && p.answer !== res) return false;       // a kész példa eredménye helyes
+    }
+    if (!ps.some(p => p.done) || !ps.some(p => !p.done)) return false;   // van kész ÉS befejezetlen
+  }
+  return true;
+})());
 check('roomFor az éttermet dining jelzővel adja (nem furnished/school)', (() => {
   const r = G.roomFor('etterem');
   return r.dining === true && r.furnished === false && !r.school && r.label === 'Étterem';
