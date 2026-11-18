@@ -827,6 +827,21 @@ function buildTake(id) { return { t: 'take', id }; }
 function netDrop(name, x, y) { if (net.online && net.ws) { try { net.ws.send(JSON.stringify(buildDrop(name, x, y))); return true; } catch (e) { /* a következő körben */ } } return false; }
 function netTake(id) { if (net.online && net.ws) { try { net.ws.send(JSON.stringify(buildTake(id))); return true; } catch (e) { /* a következő körben */ } } return false; }
 
+// offline (nincs szerver, pl. GitHub Pages): a letett tárgyak helyben, localStorage-ban
+const LOCAL_ITEMS_KEY = 'cica.items';
+let localDropped = [], localItemId = 1;
+try { const raw = (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_ITEMS_KEY)) || null; if (raw) { localDropped = JSON.parse(raw) || []; localItemId = localDropped.reduce((m, it) => Math.max(m, it.id || 0), 0) + 1; } } catch (e) { /* üres/hibás */ }
+function saveLocalItems() { try { if (typeof localStorage !== 'undefined') localStorage.setItem(LOCAL_ITEMS_KEY, JSON.stringify(localDropped)); } catch (e) { /* nem kritikus */ } }
+function groundItems() { return net.online ? net.items : localDropped; }   // amit a földön látunk / kereshetünk
+function dropHere(name, x, y) {                        // egységes letétel: online → szerver; offline → helyi
+  if (net.online && net.ws) { netDrop(name, x, y); return; }
+  localDropped.push({ id: localItemId++, name, x: Math.round(x), y: Math.round(y) }); saveLocalItems();
+}
+function takeItem(id) {                                // egységes felvétel az id alapján
+  if (net.online && net.ws) { netTake(id); return; }
+  const i = localDropped.findIndex(it => it.id === id); if (i >= 0) { localDropped.splice(i, 1); saveLocalItems(); }
+}
+
 function netConnect() {                               // a GitHub Pages-en (statikus oldal) nincs saját szerver
   const loc = window.location, WS = window.WebSocket;
   if (!loc || !WS) return false;
@@ -896,6 +911,7 @@ netConnect();                                         // többjátékos mód, ha
 if (typeof global !== 'undefined') {
   global.G = { player, net, netState, netReceive, updatePlayer, keys,
     buildDrop, buildTake, netDrop, netTake,
+    get localDropped() { return localDropped; }, dropHere, takeItem, groundItems,
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,

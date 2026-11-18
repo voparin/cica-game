@@ -398,6 +398,18 @@ check('az items üzenetet a net.items-be tölti', (() => {
   G.netReceive(JSON.stringify({ t: 'items', list: [{ id: 1, name: 'maci', x: 5, y: 6 }] }));
   return G.net.items.length === 1 && G.net.items[0].name === 'maci';
 })());
+check('offline a letett tárgy a helyi listába kerül és groundItems visszaadja', (() => {
+  G.net.online = false; G.localDropped.length = 0;
+  G.dropHere('maci', 100, 200);
+  const g = G.groundItems();
+  return g.length === 1 && g[0].name === 'maci' && g[0].x === 100;
+})());
+check('offline a tárgy felvehető (eltűnik a helyi listából)', (() => {
+  G.net.online = false; G.localDropped.length = 0;
+  G.dropHere('konyv', 0, 0); const it = G.groundItems()[0];
+  G.takeItem(it.id);
+  return G.groundItems().length === 0;
+})());
 check('netState házban a bejárati ajtó pozícióját küldi (nem a belső koordinátát)', (() => {
   const h = G.housesIn(0, 0, 1800)[0];
   G.enterHouse(h);
