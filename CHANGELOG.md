@@ -2,6 +2,13 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.12.2 – 2026-11-18
+
+- Az ajtó mostantól MINDIG a kamera felőli (elülső) falon van: így minden ház
+  ajtaja látszik, és elölről mindig megközelíthető. Megszűnt a „nyilacska"-jelző
+  (az eddig hátsó falra eső ajtóknál), és a korábban elérhetetlen speciális
+  épületekbe (pl. étterem) is be lehet lépni.
+
 ## 0.12.1 – 2026-11-18
 
 - Javítás: a nagy speciális épületekbe (gyár, iskola, iroda, bolt, étterem) megint
