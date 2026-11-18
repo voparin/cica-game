@@ -13,9 +13,10 @@ mintájára).
 ## Döntés
 - `houseType(seed)` – determinisztikus típus a seedből: a lakóház ~50%, a másik öt
   a maradékon osztozik. A `housesInBlock` minden háznak `type` mezőt ad.
-- `houseSign(type)` – a speciális típusok (gyár/iskola/iroda/bolt/étterem) kis
-  táblát kapnak az ajtó fölött (rövid címke + szín); a `drawHouse` rajzolja. A
-  lakóházhoz nincs jel.
+- `houseSign(type)` – a speciális típusok (gyár/iskola/iroda/bolt/étterem) táblát
+  kapnak: **teljes név** (rövidítés nélkül) + **ikon** + szín (`drawHouseIcon`). A
+  `drawHouse` kívül (az ajtó fölött), a `drawRoomHeader` belül (a szoba tetején)
+  rajzolja. A lakóházhoz nincs tábla (helyette otthonos jegyek: kémény, kertkapu).
 - `roomFor(type)` – a belső leírása: a lakóház berendezett (`furnished: true`,
   felirat nélkül), a többi egyszerű szoba a típus magyar nevével (`label`).
   Az `enterHouse` a `player.inHouse`-ba teszi a `type`-ot és a `room`-ot.

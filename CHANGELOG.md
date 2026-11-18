@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.11.0 – 2026-11-18
+
+- A speciális épületeken (gyár, iskola, iroda, bolt, étterem) a típus **teljes
+  neve** (rövidítés nélkül) és egy **ikon** látszik kívül (az ajtó fölötti táblán)
+  és belül is (fejléc a szoba tetején).
+- A lakóházak vizuálisan elkülönülnek: kisebbek/alacsonyabbak, meleg-pasztell
+  falszínek, **kémény + kis kertkapu**; a speciális épületek nagyobbak, hűvös
+  palettából, lapos tetővel.
+
 ## 0.10.1 – 2026-11-18
 
 - A többjátékos szerver kint van a Google Cloud Runon (projekt `cica-game`, régió
