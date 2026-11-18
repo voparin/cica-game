@@ -49,7 +49,7 @@ const until = async (cond, ms = 3000) => { const end = Date.now() + ms; while (D
   const html = await (await fetch(base + '/')).text(), js = await fetch(base + '/game.js'), nf = await fetch(base + '/nincs');
   check('kiszolgálja a játékot (index.html, game.js)', html.includes('game.js') && js.status === 200 && (await js.text()).includes('netConnect'));
   check('ismeretlen címre 404', nf.status === 404);
-  const mk = () => { const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`), c = { ws, id: 0, last: null, got: [] }; ws.onmessage = ev => { const m = JSON.parse(ev.data); if (m.t === 'hello') c.id = m.id; if (m.t === 'players') c.last = m.list; if (m.t === 'hit' || m.t === 'frag') c.got.push(m); }; return c; };
+  const mk = () => { const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`), c = { ws, id: 0, last: null, got: [], items: [] }; ws.onmessage = ev => { const m = JSON.parse(ev.data); if (m.t === 'hello') c.id = m.id; if (m.t === 'players') c.last = m.list; if (m.t === 'items') c.items = m.list; if (m.t === 'hit' || m.t === 'frag') c.got.push(m); }; return c; };
   const a = mk(), b = mk();
   await until(() => a.id && b.id);
   check('mindkét kliens csatlakozik, saját azonosítót kap', a.id > 0 && b.id > 0 && a.id !== b.id && players.size === 2);
@@ -66,6 +66,19 @@ const until = async (cond, ms = 3000) => { const end = Date.now() + ms; while (D
   a.ws.send('nem json'); a.ws.send(JSON.stringify({ t: 'state', s: { name: 'Anna', x: 150, y: 200 } }));
   await until(() => b.last && b.last.find(p => p.id === a.id && p.x === 150));
   check('a hibás üzenetet kihagyja, a mozgást továbbítja', !!(b.last && b.last.find(p => p.id === a.id && p.x === 150)));
+
+  // ---- letett tárgyak (megosztott világállapot) ----
+  a.ws.send(JSON.stringify({ t: 'drop', name: 'maci', x: 1234, y: 5678 }));
+  await until(() => b.items.some(it => it.name === 'maci' && it.x === 1234));
+  check('a letett tárgyat a másik játékos is megkapja (name, x, y)', b.items.some(it => it.name === 'maci' && it.x === 1234 && it.y === 5678));
+  const dropped = b.items.find(it => it.name === 'maci' && it.x === 1234);
+  b.ws.send(JSON.stringify({ t: 'take', id: dropped.id }));
+  await until(() => !a.items.some(it => it.id === dropped.id));
+  check('a felvett tárgy mindkét kliensnél eltűnik', !a.items.some(it => it.id === dropped.id) && !b.items.some(it => it.id === dropped.id));
+  const nBefore = a.items.length; a.ws.send(JSON.stringify({ t: 'drop', name: 'bomba', x: 0, y: 0 })); await wait(150);
+  check('hibás nevű tárgyat nem tesz le', a.items.length === nBefore);
+  for (let i = 0; i < 60; i++) a.ws.send(JSON.stringify({ t: 'drop', name: 'konyv', x: i, y: 0 })); await wait(400);
+  check('a letétel ráta-korlátos (nem nő korlátlanul)', a.items.length <= 40);
   a.ws.close();
   await until(() => players.size === 1 && b.last && b.last.length === 1);
   check('a kilépett játékos eltűnik a többiek listájáról', players.size === 1 && b.last.length === 1 && b.last[0].id === b.id);

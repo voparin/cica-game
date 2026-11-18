@@ -33,6 +33,7 @@ function cleanState(s) {
 const NAME_RE = /^[\p{L}\p{N} _.-]{3,16}$/u, PASS_MIN = 6, PASS_MAX = 64, MAX_PROGRESS = 50000, TOKEN_DAYS = 90, AUTH_PER_MIN = 10;
 const HIT_RANGE = 1600, HIT_MAX = 120, HIT_PER_SEC = 30, HIT_DMG_PER_SEC = 150, FRAG_MIN_DMG = 50, FRAG_GAP_MS = 15000;   // játékosok közötti harc: lőtávolság, legnagyobb sebzés, találat / mp
 const LOCK_FAILS = 5, LOCK_MS = 15 * 60000, IP_PER_10MIN = 40, SAVE_GAP_MS = 1000, MAX_STATE = 2048, IO_TIMEOUT = 8000;
+const MAX_DROPPED = 300, DROP_PER_MIN = 20, ITEM_NAMES = ['konyv', 'ceruza', 'tarsas', 'maci'];   // megosztott letett tárgyak: korlát, ráta, engedett nevek
 const normName = n => (typeof n === 'string' ? n.normalize('NFKC').trim().replace(/\s+/g, ' ') : '');   // NFKC: a széles / összetett alakok egyformák
 const nameId = n => 'u_' + encodeURIComponent(normName(n).toLowerCase());   // kis- és nagybetű nem számít
 const b64u = b => Buffer.from(b).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -251,6 +252,11 @@ function createServer(store = defaultStore(), verifyGoogle = googleVerifier()) {
   const ipTries = new Map();                        // IP-címenként a belépési kísérletek (10 percenként legfeljebb 40)
   const players = new Map();                       // id → { sock, state, seen }
   let nextId = 1;
+  // ---- megosztott, mentett világállapot: a földre letett tárgyak ----
+  let dropped = [], nextItemId = 1;
+  store.getItems().then(j => { try { const a = JSON.parse(j || '[]'); if (Array.isArray(a)) { dropped = a.slice(-MAX_DROPPED); nextItemId = dropped.reduce((m, it) => Math.max(m, it.id || 0), 0) + 1; } } catch (e) { /* üres/hibás */ } }).catch(() => {});
+  const saveItems = () => { store.setItems(JSON.stringify(dropped)).catch(e => console.error('tárgymentés', e.message)); };
+  const bcastItems = () => { const f = encodeFrame(JSON.stringify({ t: 'items', list: dropped })); if (f) for (const [, q] of players) if (!q.sock.destroyed) q.sock.write(f); };
   // ---- játékosok közötti harc: a lövő kliens jelzi a találatot, a szerver ellenőrzi és továbbítja a sérültnek ----
   function combatHit(p, msg) {
     const now = Date.now(); p.hits = p.hits.filter(h => now - h.t < 1000);
@@ -288,11 +294,12 @@ function createServer(store = defaultStore(), verifyGoogle = googleVerifier()) {
     sock.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + accept + '\r\n\r\n');
     sock.setNoDelay(true);
     const ip = String(req.headers['x-forwarded-for'] || sock.remoteAddress || '').split(',').pop().trim();   // az utolsó elem a Cloud Run által látott cím (az elejét a kliens írhatja)
-    const id = nextId++, p = { sock, state: null, seen: Date.now(), user: null, tries: [], lastSave: 0, ip, hits: [], hitBy: null, lastFrag: 0, send: null };
+    const id = nextId++, p = { sock, state: null, seen: Date.now(), user: null, tries: [], lastSave: 0, ip, hits: [], hitBy: null, lastFrag: 0, drops: [], send: null };
     players.set(id, p);
     const send = obj => { const f = encodeFrame(JSON.stringify(obj)); if (f && !sock.destroyed) sock.write(f); };
     p.send = send; p.id = id;
     send({ t: 'hello', id });
+    send({ t: 'items', list: dropped });                                    // a belépő megkapja a földön lévő tárgyakat
     let buf = Buffer.alloc(0);
     sock.on('data', chunk => {
       buf = Buffer.concat([buf, chunk]);
@@ -323,6 +330,17 @@ function createServer(store = defaultStore(), verifyGoogle = googleVerifier()) {
           acc.save(p.user.id, msg.progress).then(r => send({ t: 'saved', ...r })).catch(e => { console.error('mentési hiba', e.message); send({ t: 'saved', ok: false }); });
         } else if (msg && msg.t === 'hit') combatHit(p, msg);
         else if (msg && msg.t === 'frag') combatFrag(p, msg);
+        else if (msg && msg.t === 'drop') {
+          const now = Date.now(); p.drops = p.drops.filter(t => now - t < 60000);
+          if (p.drops.length >= DROP_PER_MIN || !ITEM_NAMES.includes(msg.name)) continue;   // ráta-korlát + csak ismert tárgy
+          p.drops.push(now);
+          dropped.push({ id: nextItemId++, name: msg.name, x: num(msg.x, -1e7, 1e7), y: num(msg.y, -1e7, 1e7) });
+          if (dropped.length > MAX_DROPPED) dropped.shift();                 // a legrégebbi kiesik
+          saveItems(); bcastItems();
+        } else if (msg && msg.t === 'take') {
+          const i = dropped.findIndex(it => it.id === Math.floor(+msg.id));
+          if (i >= 0) { dropped.splice(i, 1); saveItems(); bcastItems(); }
+        }
         else if (msg && msg.t === 'logout') p.user = null;
       }
     });
