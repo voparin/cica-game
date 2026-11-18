@@ -709,16 +709,41 @@ function drawStreets() {
 }
 
 // egy ház kirajzolása izometrikusan: látható oldalfalak + tető a típus szerint
-// típusonkénti jel (az ajtó fölötti kis tábla): rövid címke + szín; a lakóházhoz nincs
+// típusonkénti jel (az ajtó fölötti tábla): teljes név + szín + ikon-azonosító; a lakóházhoz nincs
 function houseSign(type) {
   switch (type) {
-    case 'gyar': return { label: 'GY', color: '#8a8f98' };
-    case 'iskola': return { label: 'IS', color: '#e0b43a' };
-    case 'iroda': return { label: 'IR', color: '#5b7fa6' };
-    case 'bolt': return { label: 'BOLT', color: '#3f9e5e' };
-    case 'etterem': return { label: 'ÉT', color: '#c7563f' };
+    case 'gyar': return { label: 'Gyár', color: '#8a8f98', icon: 'gyar' };
+    case 'iskola': return { label: 'Iskola', color: '#e0b43a', icon: 'iskola' };
+    case 'iroda': return { label: 'Iroda', color: '#5b7fa6', icon: 'iroda' };
+    case 'bolt': return { label: 'Bolt', color: '#3f9e5e', icon: 'bolt' };
+    case 'etterem': return { label: 'Étterem', color: '#c7563f', icon: 'etterem' };
     default: return null;                            // lakóház: nincs jel
   }
+}
+// egy háztípus-ikon kirajzolása (sx,sy) köré, r sugárral – egyszerű, felismerhető vektor
+function drawHouseIcon(sx, sy, r, icon) {
+  ctx.save(); ctx.translate(sx, sy);
+  if (icon === 'gyar') {                               // gyár: épület + kémény füsttel
+    ctx.fillStyle = '#5a5f66'; ctx.fillRect(-r, 0, 2 * r, r); ctx.fillRect(r * 0.4, -r * 0.8, r * 0.4, r * 0.8);   // test + kémény
+    ctx.fillStyle = '#cfd4da'; ctx.beginPath(); ctx.arc(r * 0.6, -r, r * 0.3, 0, Math.PI * 2); ctx.fill();           // füst
+  } else if (icon === 'iskola') {                      // iskola: ballagó-kalap
+    ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.moveTo(0, -r * 0.3); ctx.lineTo(r, 0); ctx.lineTo(0, r * 0.3); ctx.lineTo(-r, 0); ctx.closePath(); ctx.fill();   // tető-rombusz
+    ctx.fillStyle = '#2b2b2b'; ctx.fillRect(-r * 0.5, 0, r, r * 0.4);                                                 // alja
+    ctx.strokeStyle = '#e0b43a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(r, r * 0.6); ctx.stroke();   // bojt
+  } else if (icon === 'iroda') {                       // iroda: épület ablakokkal
+    ctx.fillStyle = '#4f6a86'; ctx.fillRect(-r * 0.8, -r, r * 1.6, 2 * r);
+    ctx.fillStyle = '#cfe0f0'; for (let yy = -r * 0.7; yy < r * 0.8; yy += r * 0.55) for (let xx = -r * 0.5; xx < r * 0.5; xx += r * 0.55) ctx.fillRect(xx, yy, r * 0.3, r * 0.3);
+  } else if (icon === 'bolt') {                        // bolt: bevásárlókosár
+    ctx.strokeStyle = '#2f7d4a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-r, -r * 0.4); ctx.lineTo(-r * 0.6, -r * 0.4); ctx.lineTo(-r * 0.3, r * 0.5); ctx.lineTo(r * 0.7, r * 0.5); ctx.lineTo(r, -r * 0.2); ctx.lineTo(-r * 0.4, -r * 0.2); ctx.stroke();   // kosár
+    ctx.fillStyle = '#2f7d4a'; ctx.beginPath(); ctx.arc(-r * 0.1, r * 0.8, 1.6, 0, Math.PI * 2); ctx.arc(r * 0.5, r * 0.8, 1.6, 0, Math.PI * 2); ctx.fill();   // kerekek
+  } else if (icon === 'etterem') {                     // étterem: villa + kés
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-r * 0.4, -r); ctx.lineTo(-r * 0.4, r); ctx.stroke();                                 // villa nyele
+    ctx.beginPath(); ctx.moveTo(-r * 0.7, -r); ctx.lineTo(-r * 0.7, -r * 0.3); ctx.moveTo(-r * 0.1, -r); ctx.lineTo(-r * 0.1, -r * 0.3); ctx.stroke();   // villa foga
+    ctx.beginPath(); ctx.moveTo(r * 0.5, -r); ctx.lineTo(r * 0.5, r); ctx.moveTo(r * 0.5, -r); ctx.lineTo(r * 0.8, -r * 0.4); ctx.stroke();               // kés
+  }
+  ctx.restore();
 }
 
 // az izometrikus kamera a -x,-y felől néz, így a kamera felőli (elülső) két oldalfal
@@ -787,11 +812,15 @@ function drawHouse(h) {
     ctx.fillStyle = '#1b1410'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('bejárat', ax, ay - 8);
   }
   const sign = houseSign(h.type);
-  if (sign) {
-    const [lx, ly] = worldToScreen(h.x, h.y + hh, z + 6);
-    ctx.fillStyle = sign.color; ctx.fillRect(lx - 14, ly - 12, 28, 14);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(sign.label, lx, ly - 5); ctx.textBaseline = 'alphabetic';
+  if (sign) {                                           // tábla a tető fölött: ikon + teljes név
+    const [lx, ly] = worldToScreen(h.x, h.y + hh, z + 10);
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(sign.label).width, pad = 8, icon = 16, bw = icon + 6 + tw + pad * 2, bx = lx - bw / 2, by = ly - 22;
+    ctx.fillStyle = 'rgba(20,16,12,0.82)'; ctx.fillRect(bx, by, bw, 22);     // sötét tábla-háttér (olvasható)
+    ctx.strokeStyle = sign.color; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 22);
+    drawHouseIcon(bx + pad + icon / 2, by + 11, icon / 2, sign.icon);        // ikon balra
+    ctx.fillStyle = '#fff'; ctx.fillText(sign.label, bx + pad + icon + 6, by + 11);   // teljes név
+    ctx.textBaseline = 'alphabetic';
   }
 }
 
@@ -1053,7 +1082,7 @@ if (typeof global !== 'undefined') {
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     drawTree, drawAnimal,
-    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad,
+    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad, drawHouseIcon,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }

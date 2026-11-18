@@ -119,6 +119,14 @@ check('minden speciális típushoz van jel, a lakóházhoz nincs', (() => {
   const special = ['gyar', 'iskola', 'iroda', 'bolt', 'etterem'];
   return special.every(t => { const s = G.houseSign(t); return s && s.label && s.color; }) && G.houseSign('lakohaz') === null;
 })());
+check('houseSign teljes (rövidítés nélküli) nevet és ikon-azonosítót ad', (() => {
+  const want = { gyar: 'Gyár', iskola: 'Iskola', iroda: 'Iroda', bolt: 'Bolt', etterem: 'Étterem' };
+  return Object.keys(want).every(t => { const s = G.houseSign(t); return s.label === want[t] && typeof s.icon === 'string' && s.icon.length > 0; });
+})());
+check('drawHouseIcon létezik és nem dob hibát minden ikonra', (() => {
+  if (typeof G.drawHouseIcon !== 'function') return false;
+  try { for (const t of ['gyar', 'iskola', 'iroda', 'bolt', 'etterem']) G.drawHouseIcon(100, 100, 10, G.houseSign(t).icon); return true; } catch (e) { return false; }
+})());
 
 // --- Házrajz (tömör, nem átlátszó) ---
 check('visibleWalls a két kamera felőli falat adja (a +x és +y irányút, hátulról előre)', (() => {
