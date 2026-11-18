@@ -363,6 +363,19 @@ check('iskolában a padnál E-re leül, a kijáratnál E-re kilép', (() => {
   const left = !G.player.inHouse;
   return sat && stood && left;
 })());
+check('étteremben az asztalnál E-re leül, a kijáratnál E-re kilép', (() => {
+  G.player.riding = null; G.player.inHouse = null; G.player.sitting = null;
+  const h = G.housesIn(0, 0, 6000).find(x => x.type === 'etterem');
+  if (!h) return true;                                    // ha a közelben nincs étterem, kihagyjuk
+  G.enterHouse(h);
+  const L = G.restaurantLayout(G.player.inHouse.rw, G.player.inHouse.rh);
+  G.player.ix = L.tables[0].x; G.player.iy = L.tables[0].y; G.onUse();
+  const sat = G.player.sitting === 0;
+  G.onUse(); const stood = G.player.sitting === null;     // újra E → feláll
+  G.player.ix = L.exit.x; G.player.iy = L.exit.y; G.onUse();
+  const left = !G.player.inHouse;
+  return sat && stood && left;
+})());
 check('drawBedroom létezik és a lakószoba nem dob hibát', (() => {
   G.player.riding = null; const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
   let ok = true; try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }
