@@ -460,6 +460,15 @@ check('a bolt/iroda/gyár belseje nem dob hibát (ülve is), és a rajzolók lé
   try { G.drawShop(0, 0, 360, 260); G.drawWork(0, 0, 360, 260); G.drawCrochet(100, 100); } catch (e) { ok = false; console.error(e); }
   return ok;
 })());
+check('drawRoomHeader (belső fejléc: teljes név + ikon) létezik, speciális típusra rajzol, lakóra nem', (() => {
+  if (typeof G.drawRoomHeader !== 'function') return false;
+  let drewSpecial = false;
+  try {
+    drewSpecial = G.drawRoomHeader(0, 0, 360, G.roomFor('etterem')) === true;   // visszaadja, hogy rajzolt-e fejlécet
+    const lak = G.drawRoomHeader(0, 0, 360, G.roomFor('lakohaz'));
+    return drewSpecial && lak === false;
+  } catch (e) { return false; }
+})());
 check('a speciális típusok belseje sem dob hibát (mind az 5)', (() => {
   let ok = true;
   for (const t of ['gyar', 'iskola', 'iroda', 'bolt', 'etterem']) {

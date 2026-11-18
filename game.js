@@ -333,13 +333,13 @@ function nearestDoor(x, y, range) {
 // a többi egyszerű szoba a típus magyar nevével
 const TYPE_LABEL = { gyar: 'Gyár', iskola: 'Iskola', iroda: 'Iroda', bolt: 'Bolt', etterem: 'Étterem' };
 function roomFor(type) {
-  if (type === 'lakohaz') return { furnished: true, label: '' };
-  if (type === 'iskola') return { furnished: false, label: 'Iskola', school: true };
-  if (type === 'etterem') return { furnished: false, label: 'Étterem', dining: true };
-  if (type === 'bolt') return { furnished: false, label: 'Bolt', shop: true };
-  if (type === 'iroda') return { furnished: false, label: 'Iroda', work: 'iroda' };
-  if (type === 'gyar') return { furnished: false, label: 'Gyár', work: 'gyar' };
-  return { furnished: false, label: TYPE_LABEL[type] || 'Ház' };
+  if (type === 'lakohaz') return { furnished: true, label: '', type };
+  if (type === 'iskola') return { furnished: false, label: 'Iskola', school: true, type };
+  if (type === 'etterem') return { furnished: false, label: 'Étterem', dining: true, type };
+  if (type === 'bolt') return { furnished: false, label: 'Bolt', shop: true, type };
+  if (type === 'iroda') return { furnished: false, label: 'Iroda', work: 'iroda', type };
+  if (type === 'gyar') return { furnished: false, label: 'Gyár', work: 'gyar', type };
+  return { furnished: false, label: TYPE_LABEL[type] || 'Ház', type };
 }
 // belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
 function enterHouse(h) {
@@ -572,6 +572,21 @@ function drawCrochet(cx, cy) {
   ctx.strokeStyle = '#c9b48f'; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(cx + 2 + i * 5, cy - 6); ctx.lineTo(cx + 2 + i * 5, cy + 6); ctx.stroke(); }
   ctx.strokeStyle = '#9a9a9a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 24, cy + 6); ctx.lineTo(cx + 34, cy - 4); ctx.stroke();   // horgolótű
 }
+// a szoba fejléce: a speciális típus teljes neve + ikon a szoba tetején; a lakóházhoz nincs.
+// visszaadja, hogy rajzolt-e fejlécet (igaz = speciális)
+function drawRoomHeader(ox, oy, rw, room) {
+  const sign = room && room.type ? houseSign(room.type) : null;
+  if (!sign) return false;
+  ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  const tw = ctx.measureText(sign.label).width, icon = 22, pad = 12, bw = icon + 8 + tw + pad * 2;
+  const bx = ox + rw / 2 - bw / 2, by = oy - 30;
+  ctx.fillStyle = 'rgba(20,16,12,0.9)'; ctx.fillRect(bx, by, bw, 26);
+  ctx.strokeStyle = sign.color; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 26);
+  drawHouseIcon(bx + pad + icon / 2, by + 13, icon / 2, sign.icon);
+  ctx.fillStyle = '#fff'; ctx.fillText(sign.label, bx + pad + icon + 8, by + 13);
+  ctx.textBaseline = 'alphabetic';
+  return true;
+}
 function drawInterior() {
   const r = player.inHouse;
   ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
@@ -589,6 +604,7 @@ function drawInterior() {
     ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
   }
+  drawRoomHeader(ox, oy, r.rw, r.room);                                      // fejléc: teljes név + ikon (speciális típusnál)
   if (player.inBed) {
     const L = bedroomLayout(r.rw, r.rh);
     drawPerson(ox + L.bed.x, oy + L.bed.y, 0, player.color, player.name, player.holding);
@@ -1091,7 +1107,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout, drawShop, drawWork, drawCrochet, drawGood,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout, drawShop, drawWork, drawCrochet, drawGood, drawRoomHeader,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
