@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.12.0 – 2026-11-18
+
+- A kutyák élethűbbek: valódi 4 lábú forma (test, fej, fülek, farok) láb-animációval,
+  és céltudatosan kocognak, meg-megállva szaglászni (nem cikcakkoznak).
+- A lovak Szilaj-szerűek: ívelt nyak, sörény és farok, 4 láb ügetés-animációval,
+  ami a haladáshoz igazodik (állóban nem lép).
+- Az autó rendes kabrió: látható eleje (motorháztető) és mind a négy oldala,
+  nyitott utastér két üléssel, szélvédővel, kerekekkel, fényszóróval.
+
 ## 0.11.0 – 2026-11-18
 
 - A speciális épületeken (gyár, iskola, iroda, bolt, étterem) a típus **teljes
