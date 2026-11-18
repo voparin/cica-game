@@ -381,6 +381,14 @@ check('drawBedroom létezik és a lakószoba nem dob hibát', (() => {
   let ok = true; try { G.drawInterior(); } catch (e) { ok = false; console.error(e); }
   G.leaveHouse(); return ok && typeof G.drawBedroom === 'function';
 })());
+check('drawRestaurant és a terítés (hús/répa/víz) nem dob hibát (ülve és állva)', (() => {
+  if (typeof G.drawRestaurant !== 'function' || typeof G.drawMeal !== 'function') return false;
+  const h = G.housesIn(0, 0, 6000).find(x => x.type === 'etterem');
+  if (!h) { try { G.drawRestaurant(0, 0, 360, 260); G.drawMeal(100, 100); return true; } catch (e) { return false; } }
+  G.player.riding = null; G.enterHouse(h); G.player.sitting = null;
+  let ok = true; try { G.drawInterior(); G.player.sitting = 0; G.drawInterior(); } catch (e) { ok = false; console.error(e); }
+  G.player.sitting = null; G.leaveHouse(); return ok;
+})());
 check('drawSchool létezik és nem dob hibát (ülve és állva)', (() => {
   if (typeof G.drawSchool !== 'function') return false;
   const h = G.housesIn(0, 0, 4000).find(x => x.type === 'iskola');

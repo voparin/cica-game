@@ -487,6 +487,29 @@ function drawOpenBook(cx, cy) {
   ctx.fillText(left, cx - 17, cy - 11); ctx.fillText(right, cx + 17, cy - 11);
   ctx.textBaseline = 'alphabetic';
 }
+function drawRestaurant(ox, oy, rw, rh) {
+  const L = restaurantLayout(rw, rh);
+  for (const t of L.tables) {
+    ctx.fillStyle = '#7a5a3a'; ctx.fillRect(ox + t.x - t.w / 2, oy + t.y - t.h / 2, t.w, t.h);          // asztallap
+    ctx.fillStyle = '#5a4026'; ctx.fillRect(ox + t.x - t.w / 2, oy + t.y + t.h / 2 - 4, t.w, 4);        // asztal-él
+    ctx.fillStyle = '#e8e2d4'; ctx.beginPath(); ctx.ellipse(ox + t.x, oy + t.y - 2, 10, 6, 0, 0, Math.PI * 2); ctx.fill();   // kis tányér (üres asztal)
+  }
+}
+// terítés a játékos előtt: hús a tányéron, répa, pohár víz
+function drawMeal(cx, cy) {
+  // tányér
+  ctx.fillStyle = '#f2ece0'; ctx.beginPath(); ctx.ellipse(cx, cy, 20, 12, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#c9bfa8'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, cy, 20, 12, 0, 0, Math.PI * 2); ctx.stroke();
+  // hús a tányéron
+  ctx.fillStyle = '#8a4b32'; ctx.beginPath(); ctx.ellipse(cx - 3, cy - 1, 9, 6, 0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#6e3a26'; ctx.beginPath(); ctx.ellipse(cx - 3, cy - 1, 4, 2.5, 0.3, 0, Math.PI * 2); ctx.fill();
+  // répa (a tányér mellett jobbra)
+  ctx.fillStyle = '#e07b2c'; ctx.beginPath(); ctx.moveTo(cx + 26, cy - 6); ctx.lineTo(cx + 40, cy + 2); ctx.lineTo(cx + 27, cy + 4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#3f7d46'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 26, cy - 6); ctx.lineTo(cx + 22, cy - 12); ctx.stroke();   // répazöld
+  // pohár víz (a tányér mellett balra)
+  ctx.fillStyle = '#bfe0ff'; ctx.fillRect(cx - 42, cy - 12, 12, 16);
+  ctx.strokeStyle = '#8fb8dd'; ctx.lineWidth = 1; ctx.strokeRect(cx - 42, cy - 12, 12, 16);
+}
 function drawInterior() {
   const r = player.inHouse;
   ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
@@ -497,6 +520,7 @@ function drawInterior() {
   ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('KIJÁRAT (E)', ox + r.exit.x, oy + r.exit.y + 20);
   if (r.room && r.room.furnished) drawBedroom(ox, oy, r.rw, r.rh);          // lakóház: berendezés (felirat nélkül)
   else if (r.room && r.room.school) drawSchool(ox, oy, r.rw, r.rh);         // iskolaterem: padok + tábla
+  else if (r.room && r.room.dining) drawRestaurant(ox, oy, r.rw, r.rh);     // étterem: asztalok
   else if (r.room && r.room.label) {                                        // egyéb speciális ház: a típus neve középen
     ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
@@ -510,6 +534,10 @@ function drawInterior() {
     const S = schoolLayout(r.rw, r.rh), d = S.desks[player.sitting] || S.desks[0];
     drawPerson(ox + d.x, oy + d.y - 14, 0, player.color, player.name, player.holding);   // a padnál ülve
     drawOpenBook(ox + d.x, oy + d.y);                                                     // előtte a nyitott könyv
+  } else if (player.sitting != null && r.room && r.room.dining) {
+    const T = restaurantLayout(r.rw, r.rh), t = T.tables[player.sitting] || T.tables[0];
+    drawPerson(ox + t.x, oy + t.y - 14, 0, player.color, player.name, player.holding);   // az asztalnál ülve
+    drawMeal(ox + t.x, oy + t.y);                                                         // előtte a terítés (hús, répa, víz)
   } else {
     drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name, player.holding);
   }
@@ -951,7 +979,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
