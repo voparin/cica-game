@@ -390,6 +390,14 @@ check('netState a hold és bed mezőt is küldi', (() => {
   const s = G.netState(); G.player.holding = '';
   return s.hold === 'konyv' && s.bed === false;
 })());
+check('buildDrop és buildTake a helyes üzenetet állítja össze', (() => {
+  const d = G.buildDrop('maci', 10, 20), t = G.buildTake(7);
+  return d.t === 'drop' && d.name === 'maci' && d.x === 10 && d.y === 20 && t.t === 'take' && t.id === 7;
+})());
+check('az items üzenetet a net.items-be tölti', (() => {
+  G.netReceive(JSON.stringify({ t: 'items', list: [{ id: 1, name: 'maci', x: 5, y: 6 }] }));
+  return G.net.items.length === 1 && G.net.items[0].name === 'maci';
+})());
 check('netState házban a bejárati ajtó pozícióját küldi (nem a belső koordinátát)', (() => {
   const h = G.housesIn(0, 0, 1800)[0];
   G.enterHouse(h);

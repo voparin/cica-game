@@ -807,7 +807,7 @@ const NET_SEND = 0.1;                                 // ennyi időnként küldj
 // A felhős (Cloud Run) szerver címe – az első „gcloud run deploy” után töltsd ki a kapott
 // wss://cica-game-….run.app címmel, hogy a GitHub Pages-en is legyen többjátékos mód.
 const NET_SERVER = '';
-const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries: 0 };
+const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries: 0, items: [] };
 
 function netState() {                                 // amit a többiek látnak belőlünk
   if (player.inHouse) {                                // házban: a többiek az ajtónál állva látnak
@@ -820,6 +820,12 @@ function netState() {                                 // amit a többiek látnak
     car: !!riding, kind: riding ? riding.kind : '', shirt: player.color, hold: player.holding || '', bed: false,
   };
 }
+
+// letett tárgyak hálózati rétege: a szerver megosztott listájához
+function buildDrop(name, x, y) { return { t: 'drop', name, x: Math.round(x), y: Math.round(y) }; }
+function buildTake(id) { return { t: 'take', id }; }
+function netDrop(name, x, y) { if (net.online && net.ws) { try { net.ws.send(JSON.stringify(buildDrop(name, x, y))); return true; } catch (e) { /* a következő körben */ } } return false; }
+function netTake(id) { if (net.online && net.ws) { try { net.ws.send(JSON.stringify(buildTake(id))); return true; } catch (e) { /* a következő körben */ } } return false; }
 
 function netConnect() {                               // a GitHub Pages-en (statikus oldal) nincs saját szerver
   const loc = window.location, WS = window.WebSocket;
@@ -847,6 +853,7 @@ function netReceive(text) {                           // a szerver üzenetei: he
   try { m = JSON.parse(text); } catch (e) { return; }
   if (!m || typeof m !== 'object') return;
   if (m.t === 'hello') { net.id = m.id; return; }
+  if (m.t === 'items' && Array.isArray(m.list)) { net.items = m.list; return; }   // a földön lévő tárgyak megosztott listája
   if (m.t === 'players' && Array.isArray(m.list)) {
     const seen = new Set();
     for (const p of m.list) {
@@ -888,6 +895,7 @@ netConnect();                                         // többjátékos mód, ha
 // a füstteszt számára (kamu böngészőkörnyezetben eval-eljük ezt a fájlt)
 if (typeof global !== 'undefined') {
   global.G = { player, net, netState, netReceive, updatePlayer, keys,
+    buildDrop, buildTake, netDrop, netTake,
     hash32, rand01, onRoad, nearestRoad, ROAD_SPACING, ROAD_HALF,
     housesIn, housesInBlock, HOUSE_MARGIN,
     HOUSE_WALLS, HOUSE_ROOFS, ROOF_TYPES,
