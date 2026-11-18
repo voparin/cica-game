@@ -2,6 +2,14 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.7.0 – 2026-11-18
+
+- Az iskola belseje berendezett: padok rácsban (4–6) és egy tábla a terem elején.
+- A padhoz E-vel leülve egy nyitott könyv jelenik meg az eddig tanult betűkkel
+  (A O I M E); újra E-vel felállás, a kijáratnál E-vel kilépés.
+- A többi speciális típus (gyár, iroda, bolt, étterem) belseje továbbra is a típus
+  nevével. A fizika/hálózat/szerver változatlan.
+
 ## 0.6.0 – 2026-11-17
 
 - Az állatok nem mennek a házba (a háztól egy sima, egyoldali korláttal kint

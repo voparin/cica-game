@@ -22,14 +22,19 @@ mintájára).
 - `drawBedroom(...)` – a lakószoba berendezése felülnézetben: bal oldalon ágy,
   középen szőnyeg, jobb oldalon szekrény; a szekrény tetején 3 könyv + egy társas,
   alatta a padlón egy könyv, 3 színes ceruza és egy maci.
+- **Iskola (0.7.0):** az iskola is berendezett belsőt kap (`roomFor` `school: true`):
+  `schoolLayout` padokkal rácsban + tábla; `drawSchool` rajzolja. A padnál E-vel
+  leülés (`player.sitting`), ekkor egy nyitott könyv jelenik meg (`drawOpenBook`,
+  `BOOK_LETTERS = A O I M E`). A többi típus (gyár/iroda/bolt/étterem) feliratos marad.
 - Az **ütközés a típustól független** (a `w`/`h` alaprajz dönt).
 
 ## Elvetett alternatívák
-- Minden típushoz azonnal külön berendezés: sok munka; most csak a lakóház kell.
+- Minden típushoz azonnal külön berendezés: sok munka; lépésenként bővítjük (0.4.0
+  lakóház, 0.7.0 iskola).
 - Textúra-képek a házakhoz/bútorokhoz: fájl-függőség (ADR-0001 ellen).
 
 ## Következmények
-- (+) Változatos, kívülről felismerhető város; a lakóház belül „otthonos".
-- (−) A típusoknak még nincs funkciójuk (a bolt nem ad el, az iskola nem tanít);
-  a másik öt belseje egyelőre csak a típus neve. A berendezés fix (nem a seedből
-  változik) – később bővíthető.
+- (+) Változatos, kívülről felismerhető város; a lakóház és az iskola belül berendezett.
+- (−) A típusoknak még nincs valódi funkciójuk (a bolt nem ad el; az iskolai könyv
+  dísz, nincs kvíz); a maradék három belseje egyelőre csak a típus neve. A
+  berendezés fix (nem a seedből változik) – később bővíthető.
