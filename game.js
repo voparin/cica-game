@@ -373,6 +373,13 @@ function onUse() {
     if (Math.hypot(player.ix - r.exit.x, player.iy - r.exit.y) < 40) leaveHouse();   // nem lakószoba
     return;
   }
+  // kint: a tárgy letétele/felvétele elsőbbséget élvez
+  if (player.holding) { dropHere(player.holding, player.x, player.y); player.holding = ''; return; }
+  {
+    let best = null, bd = 44;                              // a legközelebbi letett tárgy
+    for (const it of groundItems()) { const d = Math.hypot(it.x - player.x, it.y - player.y); if (d < bd) { bd = d; best = it; } }
+    if (best) { takeItem(best.id); player.holding = best.name; return; }
+  }
   if (player.riding) { toggleVehicle(); return; }        // járműből kiszállás
   const h = nearestDoor(player.x, player.y, 40);
   if (h) { enterHouse(h); return; }
@@ -530,6 +537,7 @@ function buildDrawList() {
   for (const h of housesIn(player.x, player.y, R)) list.push({ type: 'house', wx: h.x, wy: h.y, key: depthKey(h.x, h.y), h });
   for (const t of treesIn(player.x, player.y, R)) list.push({ type: 'fa', wx: t.x, wy: t.y, big: t.big, key: depthKey(t.x, t.y) });
   for (const g of animalsIn(player.x, player.y, R)) list.push({ type: 'allat', wx: g.x, wy: g.y, a: g.a, kind: g.an.kind, color: g.an.color, onTree: g.onTree, barking: g.barking, key: depthKey(g.x, g.y) });
+  for (const it of groundItems()) list.push({ type: 'targy', wx: it.x, wy: it.y, name: it.name, key: depthKey(it.x, it.y) });   // földön lévő tárgyak
   for (const v of vehiclesIn(player.x, player.y, R)) {
     if (player.riding && player.riding.id === v.id) continue;
     list.push({ type: v.kind === 'lo' ? 'horse' : 'car', wx: v.x, wy: v.y, a: v.a, color: v.color, key: depthKey(v.x, v.y) });
@@ -678,6 +686,7 @@ function drawCity() {
     if (e.type === 'house') { drawHouse(e.h); continue; }
     const [sx, sy] = worldToScreen(e.wx, e.wy);
     if (e.type === 'fa') drawTree(sx, sy, e.big);
+    else if (e.type === 'targy') drawItem(sx, sy, e.name);
     else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking });
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
@@ -796,7 +805,7 @@ function draw() {
   // HUD
   ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText(net.online ? `Online – ${net.others.size + 1} játékos` : 'Offline (egyjátékos)', 12, 22);
-  ctx.fillText('Nyilak: mozgás/vezetés   E: ház be/ki, jármű be/felszállás', 12, 40);
+  ctx.fillText('Nyilak: mozgás/vezetés   E: ' + (player.holding ? 'tárgy letétele' : 'ház/jármű/tárgy'), 12, 40);
 }
 
 // ===== Többjátékos mód (ADR-0002) =====

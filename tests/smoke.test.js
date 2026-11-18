@@ -410,6 +410,19 @@ check('offline a tárgy felvehető (eltűnik a helyi listából)', (() => {
   G.takeItem(it.id);
   return G.groundItems().length === 0;
 })());
+check('kint E: ha nálad van tárgy, leteszed (a kéz kiürül, a földön megjelenik)', (() => {
+  G.net.online = false; G.localDropped.length = 0;
+  G.player.inHouse = null; G.player.riding = null; G.player.x = 9000; G.player.y = 9000; G.player.holding = 'maci';
+  G.onUse();
+  return G.player.holding === '' && G.groundItems().some(it => it.name === 'maci');
+})());
+check('kint E: üres kézzel a közeli letett tárgyat felveszed', (() => {
+  G.net.online = false; G.localDropped.length = 0;
+  G.player.inHouse = null; G.player.riding = null; G.player.holding = '';
+  G.player.x = 9000; G.player.y = 9000; G.dropHere('konyv', 9010, 9000);
+  G.onUse();
+  return G.player.holding === 'konyv' && G.groundItems().length === 0;
+})());
 check('netState házban a bejárati ajtó pozícióját küldi (nem a belső koordinátát)', (() => {
   const h = G.housesIn(0, 0, 1800)[0];
   G.enterHouse(h);
