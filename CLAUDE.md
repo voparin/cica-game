@@ -121,6 +121,12 @@ A GitHub Pages statikus: önmagában nincs szerver, így alapból egyjátékos. 
 többjátékos módhoz a `server.js` a Google Cloud Runon fut, és a kliens a
 `NET_SERVER` címre csatlakozik.
 
+**Élő (2026-11-18 óta):** a szolgáltatás kint van, projekt `cica-game`, régió
+`europe-west1`, URL `https://cica-game-666815233922.europe-west1.run.app`, és a
+`game.js` `NET_SERVER`-je ennek a `wss://` változatára mutat. A Firestore
+adatbázis (`(default)`, `europe-west1`) is létrejött. Új kiadáshoz a szerver
+változásakor elég a lenti 4. lépés.
+
 Egyszeri beállítás (`gcloud` CLI kell, belépve: `gcloud auth login`):
 
 ```
@@ -142,10 +148,10 @@ gcloud run deploy cica-game --source . --region europe-west1 \
 ```
 
 A `gcloud run deploy` a végén kiír egy címet, pl.
-`https://cica-game-XXXXXXXX.europe-west1.run.app`. Ezt két helyen használd:
+`https://cica-game-666815233922.europe-west1.run.app`. Ezt két helyen használd:
 
 - **`game.js` → `NET_SERVER`**: a `wss://` változata (pl.
-  `wss://cica-game-XXXXXXXX.europe-west1.run.app`), hogy a GitHub Pages-en is
+  `wss://cica-game-666815233922.europe-west1.run.app`), hogy a GitHub Pages-en is
   legyen többjátékos mód. Commit + push → a Pages frissül.
 - A szerver `ALLOWED_ORIGINS` alapértéke `https://voparin.github.io`, ami a
   Pages-címünk – így külön beállítás nélkül jó. Ha máshonnan is engednéd a

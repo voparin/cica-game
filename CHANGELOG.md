@@ -2,6 +2,12 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.10.1 – 2026-11-18
+
+- A többjátékos szerver kint van a Google Cloud Runon (projekt `cica-game`, régió
+  `europe-west1`), Firestore-adatbázissal. A `game.js` `NET_SERVER`-je a felhős
+  `wss://` címre mutat, így a GitHub Pages-en is működik a többjátékos mód.
+
 ## 0.10.0 – 2026-11-18
 
 - Bolt: a polcokon mindig látszik az áru – répa, 3 paradicsom, 3 virsli, 2 uborka

@@ -927,7 +927,7 @@ function draw() {
 const NET_SEND = 0.1;                                 // ennyi időnként küldjük a helyzetünket (mp)
 // A felhős (Cloud Run) szerver címe – az első „gcloud run deploy” után töltsd ki a kapott
 // wss://cica-game-….run.app címmel, hogy a GitHub Pages-en is legyen többjátékos mód.
-const NET_SERVER = '';
+const NET_SERVER = 'wss://cica-game-666815233922.europe-west1.run.app';
 const net = { ws: null, id: 0, online: false, others: new Map(), sendT: 0, tries: 0, items: [] };
 
 function netState() {                                 // amit a többiek látnak belőlünk
