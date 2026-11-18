@@ -2,6 +2,14 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.14.0 – 2026-11-18
+
+- Az iskolában a nyitott könyvben mindig más-más értelmes szó látszik a tanult
+  betűkből (A O I M E); minden leüléskor új szó, akár ugyanahhoz a padhoz ülve is.
+- A táblán 3-4 matek példa (összeadás/kivonás 1–10 között, 0–10 eredménnyel),
+  némelyik kész és helyes, némelyik befejezetlen. Belépéskor új készlet, és a
+  táblánál E-t nyomva újragenerálódik.
+
 ## 0.13.0 – 2026-11-18
 
 - Nem jelenik meg olyan ház, amelynek a bejáratát eltakarná: a takart (hátsó)
