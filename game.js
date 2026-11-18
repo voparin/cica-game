@@ -187,9 +187,11 @@ function collideTrees(p, pad) {                          // kör-akadály: kitol
 // minden háznak egy kutya vagy macska, determinisztikusan a seedből; a kezdőpont a ház mellett
 const ANIMAL_ROAM = 60;          // ennyit kóborol a kezdőpont körül
 const BARK_RANGE = 130;          // ennyin belül két kutya egymásra ugat
+const CAT_COLORS = ['#c98a3a', '#2b2b2b', '#e8e2d4', '#8a6b4a', '#6b6b6b'];   // cirmos, fekete, fehér, barna, szürke
+const DOG_COLORS = ['#8a6b4a', '#4a3524', '#d9c7a0', '#5a4632'];
 function animalFor(h) {
   const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
-  const color = kind === 'kutya' ? '#8a6b4a' : '#9a9a9a';
+  const color = kind === 'kutya' ? DOG_COLORS[(h.seed >>> 22) % DOG_COLORS.length] : CAT_COLORS[(h.seed >>> 22) % CAT_COLORS.length];
   const hx = h.x + h.w / 2 + 26, hy = h.y;
   let tree = null;
   if (kind === 'macska') {                               // a macskához a legközelebbi fa (fára mászáshoz)
@@ -905,14 +907,44 @@ function drawTree(sx, sy, big) {
 function drawAnimal(sx, sy, a, kind, color, flags) {
   flags = flags || {};
   if (kind === 'kutya') { drawDog(sx, sy, a, color, flags); return; }
-  const up = flags.onTree ? 38 : 0;                      // a fán ülő macska a lombnál (feljebb)
-  const y = sy - up;
-  if (!flags.onTree) drawShadow(sx, sy, 10, 5);
-  ctx.save(); ctx.translate(sx, y); ctx.rotate(a); ctx.scale(1, 0.7);
-  ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(0, 0, 11, 6, 0, 0, Math.PI * 2); ctx.fill();   // test
-  ctx.beginPath(); ctx.arc(10, -2, 4, 0, Math.PI * 2); ctx.fill();          // fej
-  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-11, -2); ctx.lineTo(-17, -7); ctx.stroke();   // macskafarok
-  ctx.restore();
+  drawCat(sx, sy, a, color, flags);
+}
+// macska: a talajon álló, menetirányba forgatott, karcsú test; hegyes fülek, hosszú felcsapott farok; láb-animáció
+function drawCat(sx, sy, a, color, flags) {
+  flags = flags || {};
+  const LEN = 40, WID = 15, Z = 15, col = color || '#c98a3a';    // meleg cirmos alap
+  const up = flags.onTree ? 38 : 0;                               // a fán ülő macska a lombnál (feljebb)
+  if (!flags.onTree) drawShadow(sx, sy, 16, 8);
+  const P = (lx, ly, lz) => vehPt(sx, sy - up, a, lx, ly, lz);
+  const ph = flags.phase || 0, amp = flags.moving === false ? 0 : 1;
+  // 4 karcsú láb (átlós párok ellenfázisban)
+  ctx.strokeStyle = shade(col, 0.3); ctx.lineWidth = 3;
+  for (const [lx, ly, pp] of [[LEN * 0.28, -WID / 2, 0], [LEN * 0.28, WID / 2, Math.PI], [-LEN * 0.3, -WID / 2, Math.PI], [-LEN * 0.3, WID / 2, 0]]) {
+    const swing = Math.sin(ph + pp) * 4 * amp;
+    const foot = P(lx + swing, ly, 0), hip = P(lx, ly, Z * 0.6);
+    ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
+  }
+  // karcsú, enyhén ovális test
+  fillPoly([P(LEN * 0.42, -WID / 2, Z), P(LEN * 0.42, WID / 2, Z), P(-LEN * 0.42, WID / 2, Z), P(-LEN * 0.42, -WID / 2, Z)], col);
+  fillPoly([P(LEN * 0.42, WID / 2, Z * 0.55), P(-LEN * 0.42, WID / 2, Z * 0.55), P(-LEN * 0.42, WID / 2, Z), P(LEN * 0.42, WID / 2, Z)], shade(col, 0.2));   // oldal
+  // kis kerek fej az orrnál
+  const head = P(LEN * 0.5, 0, Z + 5);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(head[0], head[1], 7, 6, 0, 0, Math.PI * 2); ctx.fill();
+  // hegyes fülek (háromszögek)
+  ctx.fillStyle = shade(col, 0.1);
+  for (const dy of [-4, 4]) { const b = P(LEN * 0.46, dy, Z + 9), t = P(LEN * 0.46, dy, Z + 16), s2 = P(LEN * 0.54, dy, Z + 9); ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(t[0], t[1]); ctx.lineTo(s2[0], s2[1]); ctx.closePath(); ctx.fill(); }
+  // pofa: két szem + orr
+  const eL = P(LEN * 0.54, -2.5, Z + 6), eR = P(LEN * 0.54, 2.5, Z + 6), nose = P(LEN * 0.6, 0, Z + 4);
+  ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.arc(eL[0], eL[1], 1.4, 0, Math.PI * 2); ctx.arc(eR[0], eR[1], 1.4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#d98a97'; ctx.beginPath(); ctx.arc(nose[0], nose[1], 1.4, 0, Math.PI * 2); ctx.fill();
+  // cirmos csíkok a háton
+  ctx.strokeStyle = shade(col, 0.28); ctx.lineWidth = 1.5;
+  for (let k = -1; k <= 1; k++) { const p0 = P(LEN * 0.1 * k, -WID / 2, Z), p1 = P(LEN * 0.1 * k, WID / 2, Z); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+  // hosszú, felfelé csapott, lengő farok
+  const wag = Math.sin(ph * 0.8) * 4 * amp;
+  const t0 = P(-LEN * 0.42, 0, Z), t1 = P(-LEN * 0.6, wag, Z + 10), t2 = P(-LEN * 0.62, wag + 3, Z + 20);
+  ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(t0[0], t0[1]); ctx.quadraticCurveTo(t1[0], t1[1], t2[0], t2[1]); ctx.stroke(); ctx.lineCap = 'butt';
 }
 // kutya: a talajon álló, menetirányba forgatott, 4 lábbal (járás-animáció), test, fej, fülek, farok
 function drawDog(sx, sy, a, color, flags) {
@@ -1189,7 +1221,7 @@ if (typeof global !== 'undefined') {
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
-    drawTree, drawAnimal, drawDog,
+    drawTree, drawAnimal, drawDog, drawCat,
     streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad, drawHouseIcon, drawHomeDetails,
     drawCity,
     get W() { return W; }, get H() { return H; } };
