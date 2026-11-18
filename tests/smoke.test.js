@@ -317,6 +317,15 @@ check('schoolLayout 4-6 padot, táblát és kijáratot ad, mind a szobán belül
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
   return Array.isArray(L.desks) && L.desks.length >= 4 && L.desks.length <= 6 && L.desks.every(inside) && L.board && inside(L.board) && L.exit && inside(L.exit);
 })());
+check('roomFor az éttermet dining jelzővel adja (nem furnished/school)', (() => {
+  const r = G.roomFor('etterem');
+  return r.dining === true && r.furnished === false && !r.school && r.label === 'Étterem';
+})());
+check('restaurantLayout 3-4 asztalt és kijáratot ad, mind a szobán belül', (() => {
+  const L = G.restaurantLayout(360, 260);
+  const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
+  return Array.isArray(L.tables) && L.tables.length >= 3 && L.tables.length <= 4 && L.tables.every(inside) && L.exit && inside(L.exit);
+})());
 check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.player.riding = null; G.player.inHouse = null;
   const h = G.housesIn(0, 0, 3000)[0];

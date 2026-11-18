@@ -332,6 +332,7 @@ const TYPE_LABEL = { gyar: 'Gyár', iskola: 'Iskola', iroda: 'Iroda', bolt: 'Bol
 function roomFor(type) {
   if (type === 'lakohaz') return { furnished: true, label: '' };
   if (type === 'iskola') return { furnished: false, label: 'Iskola', school: true };
+  if (type === 'etterem') return { furnished: false, label: 'Étterem', dining: true };
   return { furnished: false, label: TYPE_LABEL[type] || 'Ház' };
 }
 // belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
@@ -419,6 +420,13 @@ function schoolLayout(rw, rh) {
   const x0 = 70, y0 = 90, dx = (rw - 140) / (cols - 1), dy = 54;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) desks.push({ x: x0 + c * dx, y: y0 + r * dy, w: 46, h: 26 });
   return { desks, board: { x: rw / 2, y: 34, w: Math.min(220, rw - 80), h: 26 }, exit: { x: rw / 2, y: rh - 10 } };
+}
+// az étterem elrendezése EGY forrásból (rajz + interakció): asztalok rácsban, kijárat
+function restaurantLayout(rw, rh) {
+  const tables = [];
+  const y0 = 80, dyr = 80, perRow = 2, x0 = rw * 0.3, dxc = rw * 0.4;
+  for (let i = 0; i < 4; i++) { const r = Math.floor(i / perRow), c = i % perRow; tables.push({ x: x0 + c * dxc, y: y0 + r * dyr, w: 56, h: 34 }); }
+  return { tables, exit: { x: rw / 2, y: rh - 10 } };
 }
 // egy tárgy kis ikonja (a szobában és a kézben is ezt használjuk)
 function drawItem(sx, sy, name) {
@@ -933,7 +941,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
