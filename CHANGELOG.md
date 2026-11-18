@@ -2,6 +2,13 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.9.0 – 2026-11-18
+
+- Az étterem belseje berendezett: 3-4 asztal. Az asztalhoz érve E-vel leülsz, és
+  megjelenik előtted a terítés: hús a tányéron, egy répa és egy pohár víz; újra
+  E-vel felállsz, a kijáratnál E-vel kilépsz.
+- A maradék típus (gyár, iroda, bolt) belseje továbbra is a típus nevével.
+
 ## 0.8.0 – 2026-11-18
 
 - A felvett tárgyat (könyv, ceruza, társas, maci) E-vel bárhol le lehet tenni a

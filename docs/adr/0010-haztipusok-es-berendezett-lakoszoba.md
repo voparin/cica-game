@@ -25,7 +25,11 @@ mintájára).
 - **Iskola (0.7.0):** az iskola is berendezett belsőt kap (`roomFor` `school: true`):
   `schoolLayout` padokkal rácsban + tábla; `drawSchool` rajzolja. A padnál E-vel
   leülés (`player.sitting`), ekkor egy nyitott könyv jelenik meg (`drawOpenBook`,
-  `BOOK_LETTERS = A O I M E`). A többi típus (gyár/iroda/bolt/étterem) feliratos marad.
+  `BOOK_LETTERS = A O I M E`).
+- **Étterem (0.9.0):** `roomFor` `dining: true`; `restaurantLayout` 3-4 asztallal;
+  `drawRestaurant` rajzolja. Az asztalnál E-vel leülés (`player.sitting` újrahasznosítva),
+  ekkor a terítés jelenik meg (`drawMeal`: hús a tányéron, répa, pohár víz).
+  A maradék típus (gyár/iroda/bolt) feliratos marad.
 - Az **ütközés a típustól független** (a `w`/`h` alaprajz dönt).
 
 ## Elvetett alternatívák
