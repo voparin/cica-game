@@ -287,6 +287,10 @@ check('drawTree és drawAnimal nem dob hibát', (() => {
 check('drawAnimal a onTree és barking jelzőkkel nem dob hibát', (() => {
   try { G.drawAnimal(100, 100, 0, 'macska', '#9a9a9a', { onTree: true }); G.drawAnimal(100, 100, 0, 'kutya', '#8a6b4a', { barking: true }); return true; } catch (e) { return false; }
 })());
+check('drawDog létezik és a láb-animációs jelzőkkel (phase, moving) nem dob hibát', (() => {
+  if (typeof G.drawDog !== 'function') return false;
+  try { for (const a of [0, 1.5, 3.1, -1.2]) { G.drawDog(100, 100, a, '#8a6b4a', { phase: 2, moving: true }); G.drawDog(100, 100, a, '#8a6b4a', { phase: 0, moving: false }); } return true; } catch (e) { return false; }
+})());
 
 // --- Jármű a helyén marad (mozgatott pozíció + mentés) ---
 check('egy mozgatott jármű a saját ID-jén az új helyen jelenik meg (nem a formula-helyen)', (() => {

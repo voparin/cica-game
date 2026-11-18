@@ -889,7 +889,7 @@ function drawCity() {
     const [sx, sy] = worldToScreen(e.wx, e.wy);
     if (e.type === 'fa') drawTree(sx, sy, e.big);
     else if (e.type === 'targy') drawItem(sx, sy, e.name);
-    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking });
+    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking, phase: e.phase, moving: e.moving });
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
     else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name, e.hold);   // a járművön ülő: feljebb, hogy kilátszódjon
@@ -912,19 +912,50 @@ function drawTree(sx, sy, big) {
 }
 function drawAnimal(sx, sy, a, kind, color, flags) {
   flags = flags || {};
+  if (kind === 'kutya') { drawDog(sx, sy, a, color, flags); return; }
   const up = flags.onTree ? 38 : 0;                      // a fán ülő macska a lombnál (feljebb)
   const y = sy - up;
   if (!flags.onTree) drawShadow(sx, sy, 10, 5);
   ctx.save(); ctx.translate(sx, y); ctx.rotate(a); ctx.scale(1, 0.7);
   ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(0, 0, 11, 6, 0, 0, Math.PI * 2); ctx.fill();   // test
   ctx.beginPath(); ctx.arc(10, -2, 4, 0, Math.PI * 2); ctx.fill();          // fej
-  if (kind === 'macska') { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-11, -2); ctx.lineTo(-17, -7); ctx.stroke(); }  // macskafarok
-  else { ctx.fillRect(-14, -3, 5, 2); }                                     // kutyafarok
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-11, -2); ctx.lineTo(-17, -7); ctx.stroke();   // macskafarok
   ctx.restore();
-  if (flags.barking) {                                   // „Vau!" buborék a kutya fölött
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(sx + 14, sy - 16, 15, 9, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1b1410'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('Vau!', sx + 14, sy - 16); ctx.textBaseline = 'alphabetic';
+}
+// kutya: a talajon álló, menetirányba forgatott, 4 lábbal (járás-animáció), test, fej, fülek, farok
+function drawDog(sx, sy, a, color, flags) {
+  flags = flags || {};
+  const LEN = 54, WID = 22, Z = 20, col = color || '#8a6b4a';
+  drawShadow(sx, sy, 24, 11);
+  const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
+  const ph = flags.phase || 0, amp = flags.moving === false ? 0 : 1;   // állóban nem lép
+  // 4 láb: átlós párok ellenfázisban (ügetés), a lépéskor előre-hátra leng
+  const legs = [[LEN * 0.3, -WID / 2, 0], [LEN * 0.3, WID / 2, Math.PI], [-LEN * 0.3, -WID / 2, Math.PI], [-LEN * 0.3, WID / 2, 0]];
+  ctx.strokeStyle = shade(col, 0.3); ctx.lineWidth = 4;
+  for (const [lx, ly, pp] of legs) {
+    const swing = Math.sin(ph + pp) * 6 * amp;                              // a láb előre-hátra leng
+    const foot = P(lx + swing, ly, 0), hip = P(lx, ly, Z * 0.6);
+    ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
+  }
+  // test (felső lap, enyhén megemelve)
+  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], col);
+  fillPoly([P(LEN / 2, WID / 2, Z * 0.6), P(-LEN / 2, WID / 2, Z * 0.6), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(col, 0.22));   // oldal
+  // nyak + fej (az orrnál, kissé lejjebb hajtva)
+  const head = P(LEN * 0.6, 0, Z + 6);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(head[0], head[1], 8, 6, 0, 0, Math.PI * 2); ctx.fill();   // fej
+  const snout = P(LEN * 0.78, 0, Z + 3); ctx.beginPath(); ctx.ellipse(snout[0], snout[1], 4, 3, 0, 0, Math.PI * 2); ctx.fill();   // orr
+  // fülek
+  ctx.fillStyle = shade(col, 0.25);
+  const e1 = P(LEN * 0.5, -6, Z + 12), e2 = P(LEN * 0.5, 6, Z + 12);
+  ctx.beginPath(); ctx.arc(e1[0], e1[1], 3, 0, Math.PI * 2); ctx.arc(e2[0], e2[1], 3, 0, Math.PI * 2); ctx.fill();
+  // farok (hátul, felfelé csapva; mozgás közben csóvál)
+  const wag = Math.sin(ph * 1.5) * 4 * amp;
+  const t0 = P(-LEN / 2, 0, Z), t1 = P(-LEN * 0.72, wag, Z + 10);
+  ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(t0[0], t0[1]); ctx.lineTo(t1[0], t1[1]); ctx.stroke();
+  if (flags.barking) {                                   // „Vau!" buborék
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(sx + 18, sy - 24, 16, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1b1410'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Vau!', sx + 18, sy - 24); ctx.textBaseline = 'alphabetic';
   }
 }
 function nameTag(sx, sy, name) {
@@ -1139,7 +1170,7 @@ if (typeof global !== 'undefined') {
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
-    drawTree, drawAnimal,
+    drawTree, drawAnimal, drawDog,
     streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad, drawHouseIcon, drawHomeDetails,
     drawCity,
     get W() { return W; }, get H() { return H; } };
