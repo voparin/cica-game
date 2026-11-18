@@ -453,15 +453,19 @@ function updateInterior(dt) {
 }
 // a lakószoba bútor-zónái EGY forrásból (rajz + interakció): szoba-lokális koordináták
 function bedroomLayout(rw, rh) {
+  const w = { x: rw - 70, y: rh / 2, w: 96, h: 150 };   // nyitott szekrény a jobb oldalon
+  const shelfY = [w.y - w.h / 2 + 34, w.y + 6];         // két polc y-pozíciója
+  const shelves = shelfY.map(y => ({ x: w.x, y, w: w.w - 10 }));
   return {
-    bed: { x: 65, y: rh / 2, w: 70, h: rh - 80 },
-    rug: { x: rw / 2, y: rh / 2, w: 110, h: 76 },
-    wardrobe: { x: rw - 65, y: 90, w: 70, h: 90 },
-    items: [
-      { name: 'konyv', x: rw - 92, y: 196 },
-      { name: 'ceruza', x: rw - 60, y: 196 },
-      { name: 'tarsas', x: rw - 40, y: 60 },
-      { name: 'maci', x: rw - 40, y: 210 },
+    bed: { x: 60, y: rh / 2, w: 68, h: rh - 90 },
+    rug: { x: rw / 2, y: rh / 2, w: 120, h: 84 },
+    wardrobe: w,
+    shelves,
+    items: [                                             // a tárgyak a polcokon, a szekrény területén belül
+      { name: 'konyv', x: w.x - 24, y: shelfY[0] },      // felső polc: könyv + társas
+      { name: 'tarsas', x: w.x + 22, y: shelfY[0] },
+      { name: 'ceruza', x: w.x - 24, y: shelfY[1] },     // alsó polc: ceruzák + maci
+      { name: 'maci', x: w.x + 22, y: shelfY[1] },
     ],
     exit: { x: rw / 2, y: rh - 10 },
   };
@@ -512,10 +516,12 @@ function drawBedroom(ox, oy, rw, rh) {
   // szőnyeg
   const g = L.rug; ctx.fillStyle = '#a23c4b'; ctx.fillRect(ox + g.x - g.w / 2, oy + g.y - g.h / 2, g.w, g.h);
   ctx.fillStyle = '#d98a97'; ctx.fillRect(ox + g.x - g.w / 2 + 12, oy + g.y - g.h / 2 + 10, g.w - 24, g.h - 20);
-  // szekrény
-  const w = L.wardrobe; ctx.fillStyle = '#6b4a30'; ctx.fillRect(ox + w.x - w.w / 2, oy + w.y - w.h / 2, w.w, w.h);
-  ctx.fillStyle = '#4a3220'; ctx.fillRect(ox + w.x - 1, oy + w.y - w.h / 2, 2, w.h);
-  // tárgyak (amit épp nem tartunk a kézben)
+  // nyitott szekrény: külső keret + világos belső + polcok
+  const w = L.wardrobe;
+  ctx.fillStyle = '#5a4026'; ctx.fillRect(ox + w.x - w.w / 2, oy + w.y - w.h / 2, w.w, w.h);              // keret
+  ctx.fillStyle = '#8a6a47'; ctx.fillRect(ox + w.x - w.w / 2 + 5, oy + w.y - w.h / 2 + 5, w.w - 10, w.h - 10);   // belső (nyitott)
+  ctx.fillStyle = '#5a4026'; for (const s of L.shelves) ctx.fillRect(ox + s.x - s.w / 2, oy + s.y + 11, s.w, 4);   // polclapok a tárgyak alatt
+  // tárgyak a polcokon (amit épp nem tartunk a kézben)
   for (const it of L.items) {
     if (player.holding === it.name) continue;
     drawItem(ox + it.x, oy + it.y, it.name);

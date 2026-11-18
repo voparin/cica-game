@@ -428,6 +428,15 @@ check('bedroomLayout az ágy/szekrény/tárgyak zónáit adja, a szobán belül'
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
   return L.bed && L.wardrobe && Array.isArray(L.items) && L.items.length === 4 && inside(L.bed) && L.items.every(inside) && L.exit && inside(L.exit);
 })());
+check('a lakószoba minden tárgya a nyitott szekrény polcain van (a szekrény területén belül)', (() => {
+  const L = G.bedroomLayout(360, 260), w = L.wardrobe;
+  const onShelf = it => Math.abs(it.x - w.x) <= w.w / 2 && it.y >= w.y - w.h / 2 && it.y <= w.y + w.h / 2;
+  return Array.isArray(L.shelves) && L.shelves.length >= 2 && L.items.every(onShelf);
+})());
+check('a lakószoba tárgyai megvannak: könyv, ceruza, társas, maci', (() => {
+  const names = G.bedroomLayout(360, 260).items.map(i => i.name).sort().join(',');
+  return names === ['ceruza', 'konyv', 'maci', 'tarsas'].sort().join(',');
+})());
 check('az ágynál E-re lefekszik; a szekrénynél E-re felvesz; a kijáratnál E-re kilép', (() => {
   G.player.riding = null; G.player.inHouse = null; G.player.holding = '';
   const h = G.housesIn(0, 0, 3000)[0]; h.type = 'lakohaz'; G.enterHouse(h);
