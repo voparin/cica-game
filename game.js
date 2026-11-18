@@ -982,27 +982,39 @@ function vehPt(sx, sy, a, lx, ly, lz = 0) {
 }
 function fillPoly(pts, fill) { ctx.fillStyle = fill; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); }
 
-// autó: a talajon fekvő, menetirányba forgatott test (nem dől); kerekek, szélvédő, fényszóró. ~2×
+// autó: rendes KABRIÓ a talajon, menetirányba forgatva (nem dől); test, motorháztető,
+// nyitott utastér két üléssel, szélvédő, kerekek, fényszóró
 function drawCarSprite(sx, sy, a, color, name) {
-  const LEN = 120, WID = 64;                            // 2× akkora, mint korábban
-  drawShadow(sx, sy, 44, 22);
+  const LEN = 120, WID = 60, col = color || '#d42020';
+  const BELT = 20;                                       // a karosszéria „övvonala" (oldalmagasság)
+  drawShadow(sx, sy, 46, 22);
   const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
-  // kerekek (a talajon, a test alatt)
+  const hl = LEN / 2, hw = WID / 2;
+  // kerekek (a talajon, a test alatt), kissé kiállva
   ctx.fillStyle = '#111';
-  for (const [lx, ly] of [[LEN * 0.32, -WID / 2], [LEN * 0.32, WID / 2], [-LEN * 0.32, -WID / 2], [-LEN * 0.32, WID / 2]]) {
-    const w = P(lx, ly, 0); ctx.beginPath(); ctx.ellipse(w[0], w[1], 9, 6, 0, 0, Math.PI * 2); ctx.fill();
+  for (const [lx, ly] of [[hl * 0.6, -hw - 2], [hl * 0.6, hw + 2], [-hl * 0.6, -hw - 2], [-hl * 0.6, hw + 2]]) {
+    const w = P(lx, ly, 3); ctx.beginPath(); ctx.ellipse(w[0], w[1], 10, 7, 0, 0, Math.PI * 2); ctx.fill();
   }
-  // karosszéria teteje (kissé megemelve, hogy legyen térfogata)
-  const Z = 16;
-  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], color || '#d42020');
-  // oldalfalak a talajtól a tetőig (a két kamera felőli él) – sötétebb árnyalat
-  fillPoly([P(LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(color || '#d42020', 0.25));
-  fillPoly([P(-LEN / 2, -WID / 2, 0), P(-LEN / 2, WID / 2, 0), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], shade(color || '#d42020', 0.4));
-  // szélvédő (az első harmadban)
-  fillPoly([P(LEN * 0.18, -WID * 0.4, Z), P(LEN * 0.18, WID * 0.4, Z), P(LEN * 0.02, WID * 0.4, Z), P(LEN * 0.02, -WID * 0.4, Z)], '#bfe0ff');
-  // fényszórók (az orrnál)
+  // oldalfalak (mind a 4, hátulról előre a kamerához: -y, -x, +x, +y) – legyen térfogata minden irányból
+  const side = (p0, p1, dark) => fillPoly([P(p0[0], p0[1], 0), P(p1[0], p1[1], 0), P(p1[0], p1[1], BELT), P(p0[0], p0[1], BELT)], shade(col, dark));
+  side([hl, -hw], [-hl, -hw], 0.1);                      // hátsó-bal oldal (távolabb)
+  side([hl, -hw], [hl, hw], 0.18);                       // eleje (orr)
+  side([-hl, -hw], [-hl, hw], 0.34);                     // hátulja (far)
+  side([hl, hw], [-hl, hw], 0.26);                       // kamera felőli oldal
+  // alsó karosszéria-lap (övvonal magasságában)
+  fillPoly([P(hl, -hw, BELT), P(hl, hw, BELT), P(-hl, hw, BELT), P(-hl, -hw, BELT)], col);
+  // motorháztető elöl + csomagtartó hátul (kissé lejtve, hogy legyen eleje/hátulja)
+  fillPoly([P(hl, -hw, BELT), P(hl, hw, BELT), P(hl * 0.35, hw * 0.9, BELT + 6), P(hl * 0.35, -hw * 0.9, BELT + 6)], shade(col, -0.06));   // motorháztető
+  fillPoly([P(-hl, -hw, BELT), P(-hl, hw, BELT), P(-hl * 0.35, hw * 0.9, BELT + 5), P(-hl * 0.35, -hw * 0.9, BELT + 5)], shade(col, 0.05)); // csomagtartó
+  // NYITOTT utastér (a középső rész besüllyesztve, sötét belső) = kabrió
+  fillPoly([P(hl * 0.32, -hw * 0.8, BELT + 6), P(hl * 0.32, hw * 0.8, BELT + 6), P(-hl * 0.32, hw * 0.8, BELT + 5), P(-hl * 0.32, -hw * 0.8, BELT + 5)], '#2a2320');
+  ctx.fillStyle = '#5a4636';                             // két ülés
+  for (const lx of [hl * 0.12, -hl * 0.12]) { const s0 = P(lx, 0, BELT + 10); ctx.beginPath(); ctx.ellipse(s0[0], s0[1], 7, 5, 0, 0, Math.PI * 2); ctx.fill(); }
+  // szélvédő (áttetsző, a utastér eleje, kissé megdöntve felfelé)
+  fillPoly([P(hl * 0.34, -hw * 0.8, BELT + 6), P(hl * 0.34, hw * 0.8, BELT + 6), P(hl * 0.22, hw * 0.7, BELT + 20), P(hl * 0.22, -hw * 0.7, BELT + 20)], 'rgba(190,224,255,0.75)');
+  // fényszórók az orron
   ctx.fillStyle = '#fff';
-  for (const ly of [-WID * 0.3, WID * 0.3]) { const w = P(LEN / 2, ly, Z); ctx.fillRect(w[0] - 2, w[1] - 2, 4, 4); }
+  for (const ly of [-hw * 0.6, hw * 0.6]) { const w = P(hl, ly, BELT * 0.6); ctx.fillRect(w[0] - 2.5, w[1] - 2.5, 5, 5); }
   nameTag(sx, sy, name);
 }
 // ló: a talajon álló, menetirányba forgatott test (nem dől); lábak, nyak+fej, farok. ~2×
