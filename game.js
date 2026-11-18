@@ -351,7 +351,9 @@ function updateDriving(dt) {
 }
 function nearestDoor(x, y, range) {
   let best = null, bestD = range;
-  for (const h of housesIn(x, y, range * 2)) {
+  // a házat a KÖZÉPpontja alapján szűrjük, de az ajtó a középtől akár ~110px-re is lehet
+  // (nagy speciális épület), ezért tágabb sugárban keresünk, és az ajtó-távot nézzük a range-re
+  for (const h of housesIn(x, y, range + 140)) {
     const d = Math.hypot(h.door.x - x, h.door.y - y);
     if (d < bestD) { bestD = d; best = h; }
   }

@@ -338,6 +338,18 @@ check('ajtónál E-re bemegy, majd a kijáraton kijön az ajtó elé', (() => {
   const outside = !G.player.inHouse && Math.hypot(G.player.x - h.door.x, G.player.y - h.door.y) < 40;
   return inside && outside;
 })());
+check('MINDEN háztípusba be lehet lépni az ajtajánál E-vel (a nagy speciális épületekbe is)', (() => {
+  for (const type of ['lakohaz', 'gyar', 'iskola', 'iroda', 'bolt', 'etterem']) {
+    const h = G.housesIn(0, 0, 9000).find(x => x.type === type);
+    if (!h) continue;
+    G.player.riding = null; G.player.inHouse = null;
+    G.player.x = h.door.x; G.player.y = h.door.y; G.onUse();
+    const inside = !!G.player.inHouse && G.player.inHouse.type === type;
+    if (G.player.inHouse) G.leaveHouse();
+    if (!inside) return false;
+  }
+  return true;
+})());
 
 // --- Szoba típus szerint ---
 check('roomFor a lakóháznak berendezést ad (nincs felirat), a többinek feliratot', (() => {
