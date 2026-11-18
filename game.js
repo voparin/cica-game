@@ -375,6 +375,16 @@ function onUse() {
       if (near(L.exit, 60)) leaveHouse();
       return;
     }
+    if (r.room && r.room.work) {                         // iroda/gyár: asztal / kijárat
+      if (player.sitting != null) { player.sitting = null; return; }   // ül → feláll
+      if (near(L.exit, 40)) { leaveHouse(); return; }
+      const T = workLayout(r.rw, r.rh);
+      let bi = -1, bd = 44;
+      for (let i = 0; i < T.tables.length; i++) { const d = Math.hypot(player.ix - T.tables[i].x, player.iy - T.tables[i].y); if (d < bd) { bd = d; bi = i; } }
+      if (bi >= 0) { player.sitting = bi; return; }
+      if (near(L.exit, 60)) leaveHouse();
+      return;
+    }
     if (r.room && r.room.furnished) {                    // lakószoba: ágy / szekrény / kijárat
       if (near(L.exit, 40)) { leaveHouse(); return; }
       if (near(L.bed, 44)) { player.inBed = true; player.sleepT = 0; return; }
