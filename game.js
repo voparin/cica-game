@@ -846,11 +846,24 @@ function drawHomeDetails(h) {
   const [kx, ky] = worldToScreen(h.x + hw * 0.5, h.y - hh * 0.5, z + 12);
   ctx.fillStyle = '#6b4a30'; ctx.fillRect(kx - 3, ky - 10, 6, 14);
   ctx.fillStyle = 'rgba(210,210,210,0.7)'; ctx.beginPath(); ctx.arc(kx, ky - 14, 4, 0, Math.PI * 2); ctx.fill();
-  // kis kertkapu az ajtó (h.door) előtt
-  const [gx, gy] = worldToScreen(h.door.x, h.door.y, 0);
-  ctx.strokeStyle = '#caa36f'; ctx.lineWidth = 2;
-  ctx.strokeRect(gx - 12, gy - 6, 24, 10);                                   // kerítés-keret
-  ctx.beginPath(); for (let i = -8; i <= 8; i += 4) { ctx.moveTo(gx + i, gy - 6); ctx.lineTo(gx + i, gy + 4); } ctx.stroke();   // léckerítés
+  // izometrikus léckerítés a ház ELŐTT (a talajon), kapu-réssel az ajtónál – nem takarja az ajtót
+  const fy = h.door.y + 14;                              // a kerítés vonala az ajtó előtt
+  const x0 = h.x - hw + 6, x1 = h.x + hw - 6;            // a telek szélessége
+  const gate = 16;                                       // a kapu-rés fél-szélessége (az ajtó x-énél)
+  const PICK = 9;                                        // a lécek magassága (z)
+  const rail = (ax, bx, zz) => { const [p0x, p0y] = worldToScreen(ax, fy, zz), [p1x, p1y] = worldToScreen(bx, fy, zz); ctx.beginPath(); ctx.moveTo(p0x, p0y); ctx.lineTo(p1x, p1y); ctx.stroke(); };
+  ctx.strokeStyle = '#d8b88a'; ctx.lineWidth = 2;
+  // vízszintes léc (fent), a kapu-rést kihagyva
+  rail(x0, h.door.x - gate, PICK); rail(h.door.x + gate, x1, PICK);
+  // függőleges lécek a talajtól a tetejükig, szintén a rést kihagyva
+  for (let lx = x0; lx <= x1 + 0.1; lx += 11) {
+    if (lx > h.door.x - gate && lx < h.door.x + gate) continue;   // a kapu helyén nincs léc
+    const [bx, by] = worldToScreen(lx, fy, 0), [tx, ty] = worldToScreen(lx, fy, PICK);
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
+  }
+  // kapu-oszlopok a rés két szélén (kicsit magasabbak)
+  ctx.lineWidth = 3;
+  for (const px of [h.door.x - gate, h.door.x + gate]) { const [bx, by] = worldToScreen(px, fy, 0), [tx, ty] = worldToScreen(px, fy, PICK + 4); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke(); }
 }
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
