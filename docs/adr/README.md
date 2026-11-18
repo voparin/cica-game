@@ -18,3 +18,4 @@ Itt van naplózva minden architekturális döntés: mit, miért és milyen alter
 | [0011](0011-hazrajz-javitas-es-nagy-ajto.md) | Házrajz javítás (kamera felőli falak) és nagy ajtó | Elfogadva | 2026-11-17 |
 | [0012](0012-fak-es-koborlo-allatok.md) | Fák (ütközéssel) és kóborló állatok | Elfogadva | 2026-11-17 |
 | [0013](0013-szoba-interakciok-es-halo-mezok.md) | Szoba-interakciók és a hold/bed hálózati mezők | Elfogadva | 2026-11-17 |
+| [0014](0014-megosztott-letett-targyak.md) | Megosztott, perzisztens letett tárgyak (az első közös világállapot) | Elfogadva | 2026-11-18 |

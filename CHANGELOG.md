@@ -2,6 +2,17 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.8.0 – 2026-11-18
+
+- A felvett tárgyat (könyv, ceruza, társas, maci) E-vel bárhol le lehet tenni a
+  földre; ott marad, és bárki (bármelyik játékos) felveheti.
+- A letett tárgyak **megosztottak és mentettek**: a szerver közös listában tartja
+  (`drop`/`take`/`items` üzenetek), korláttal (max. 300) és letétel-ráta-korláttal;
+  a lista a store-ba mentődik (túléli az újraindulást) – ez a szerver első közös
+  világállapota (ADR-0014).
+- Offline (GitHub Pages, nincs szerver): a letett tárgyak helyben, localStorage-ban.
+- Kint, ha nálad van tárgy, az E először leteszi; üres kézzel a közeli tárgyat felveszed.
+
 ## 0.7.0 – 2026-11-18
 
 - Az iskola belseje berendezett: padok rácsban (4–6) és egy tábla a terem elején.

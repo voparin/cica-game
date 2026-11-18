@@ -80,6 +80,11 @@ csak sikeres teszt után publikál.
 - Járműben a `netState` a `car: true` és `kind` (`'auto'`/`'lo'`) mezőt is küldi,
   így a többiek járműként látnak. Házban lét alatt a bejárati ajtó pozícióját
   küldjük (a házban lévő a többieknek az ajtónál áll) – nincs szerver-módosítás.
+- **Letett tárgyak (ADR-0014):** közös, mentett világállapot a szerveren. Kliens →
+  szerver: `{ t:'drop', name, x, y }` és `{ t:'take', id }`. Szerver → kliens:
+  `{ t:'items', list:[…] }` (csatlakozáskor és minden változásnál). Korlát
+  (`MAX_DROPPED`) + ráta (`DROP_PER_MIN`) + `ITEM_NAMES` whitelist; mentés a store
+  `getItems`/`setItems`-szel. Offline a kliens localStorage-ban (`groundItems`).
 
 Új, a hálózaton átvitt mezőt a `game.js` `netState`-ben **és** a `server.js`
 `cleanState`-ben is fel kell venni, különben a szerver kiszűri.
