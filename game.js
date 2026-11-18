@@ -248,7 +248,7 @@ function animalsIn(cx, cy, radius) {                     // a közeli házak ál
 // ===== Játékos =====
 // A világ koordináta-rendszere független a képernyőtől; a kamera a játékost követi.
 const SPEED = 240;                                   // px / mp
-const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0, inBed: false, holding: '', sleepT: 0 };
+const player = { x: 0, y: 0, a: 0, name: 'Szofi', color: '#2f6fd0', riding: null, inHouse: null, ix: 0, iy: 0, inBed: false, holding: '', sleepT: 0, sitting: null };
 const keys = Object.create(null);
 window.addEventListener('keydown', e => {
   if ((e.key === 'e' || e.key === 'E') && !keys._e) { keys._e = true; onUse(); }
@@ -339,6 +339,7 @@ function enterHouse(h) {
   const rw = 300 + (h.seed % 160), rh = 220 + ((h.seed >> 8) % 140);
   player.inHouse = { house: h, type: h.type || 'lakohaz', room: roomFor(h.type || 'lakohaz'), rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
   player.ix = rw / 2; player.iy = rh - 40;               // a szobában, a kijárat közelében
+  player.sitting = null; player.inBed = false;           // belépéskor állva kezdünk
 }
 function leaveHouse() {
   const b = player.inHouse.back;
@@ -350,6 +351,16 @@ function onUse() {
     if (player.inBed) return;                            // alvás alatt nincs más
     const r = player.inHouse, L = bedroomLayout(r.rw, r.rh);
     const near = (z, d) => Math.hypot(player.ix - z.x, player.iy - z.y) < d;
+    if (r.room && r.room.school) {                       // iskolaterem: pad / kijárat
+      if (player.sitting != null) { player.sitting = null; return; }   // ül → feláll
+      if (near(L.exit, 40)) { leaveHouse(); return; }
+      const S = schoolLayout(r.rw, r.rh);
+      let bi = -1, bd = 40;
+      for (let i = 0; i < S.desks.length; i++) { const d = Math.hypot(player.ix - S.desks[i].x, player.iy - S.desks[i].y); if (d < bd) { bd = d; bi = i; } }
+      if (bi >= 0) { player.sitting = bi; return; }
+      if (near(L.exit, 60)) leaveHouse();
+      return;
+    }
     if (r.room && r.room.furnished) {                    // lakószoba: ágy / szekrény / kijárat
       if (near(L.exit, 40)) { leaveHouse(); return; }
       if (near(L.bed, 44)) { player.inBed = true; player.sleepT = 0; return; }
@@ -372,6 +383,7 @@ function updateInterior(dt) {
   if (!player.inHouse) return;
   const r = player.inHouse;
   if (player.inBed) { player.sleepT += dt; if (player.sleepT > 2.2) player.inBed = false; return; }   // rövid alvás, majd felkel
+  if (player.sitting != null) return;                    // ülés közben nincs mozgás (E-vel feláll)
   let dx = 0, dy = 0;
   if (keys.ArrowLeft) dx -= 1; if (keys.ArrowRight) dx += 1;
   if (keys.ArrowUp) dy -= 1; if (keys.ArrowDown) dy += 1;
