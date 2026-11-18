@@ -2,6 +2,15 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.13.0 – 2026-11-18
+
+- Nem jelenik meg olyan ház, amelynek a bejáratát eltakarná: a takart (hátsó)
+  házat nem generáljuk, és a ház ajtaja elé eső fát is kihagyjuk – minden látható
+  ház ajtaja szabadon látszik.
+- A kutya időnként a legközelebbi fához megy, felemeli a hátsó lábát és lepisili.
+- A lakóház kerítése kidolgozva: izometrikus léckerítés a ház előtt, kapu-réssel
+  az ajtónál (nem takarja a bejáratot).
+
 ## 0.12.5 – 2026-11-18
 
 - A lakószoba szekrénye most nyitott, látható polcokkal, és a tárgyak (könyv,
