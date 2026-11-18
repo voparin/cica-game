@@ -403,6 +403,26 @@ check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.leaveHouse();
   return t === h.type;
 })());
+check('a belső szoba mérete mindig elég nagy (a seed előjeles eltolása nem ad apró szobát)', (() => {
+  return G.housesIn(0, 0, 9000).every(h => {
+    G.enterHouse(h); const r = G.player.inHouse; G.leaveHouse();
+    return r.rw >= 300 && r.rw <= 480 && r.rh >= 240 && r.rh <= 380;
+  });
+})());
+check('egyetlen háztípus berendezése sem lóg ki a szobából', (() => {
+  const inside = (z, rw, rh) => z.x - (z.w || 0) / 2 >= 0 && z.y - (z.h || 0) / 2 >= 0 && z.x + (z.w || 0) / 2 <= rw && z.y + (z.h || 0) / 2 <= rh;
+  for (const type of ['lakohaz', 'iskola', 'etterem', 'bolt', 'iroda', 'gyar']) {
+    const h = G.housesIn(0, 0, 9000).find(x => x.type === type); if (!h) continue;
+    G.enterHouse(h); const r = G.player.inHouse, rw = r.rw, rh = r.rh; G.leaveHouse();
+    const zones = type === 'lakohaz' ? (() => { const L = G.bedroomLayout(rw, rh); return [L.bed, L.wardrobe, L.rug, ...L.items]; })()
+      : type === 'iskola' ? (() => { const L = G.schoolLayout(rw, rh); return [...L.desks, L.board]; })()
+      : type === 'etterem' ? G.restaurantLayout(rw, rh).tables
+      : type === 'bolt' ? (() => { const L = G.shopLayout(rw, rh); return [...L.shelves, ...L.goods]; })()
+      : G.workLayout(rw, rh).tables;
+    if (!zones.every(z => inside(z, rw, rh))) return false;
+  }
+  return true;
+})());
 check('bedroomLayout az ágy/szekrény/tárgyak zónáit adja, a szobán belül', (() => {
   const L = G.bedroomLayout(360, 260);
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;

@@ -369,7 +369,7 @@ function roomFor(type) {
 }
 // belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
 function enterHouse(h) {
-  const rw = 300 + (h.seed % 160), rh = 220 + ((h.seed >> 8) % 140);
+  const rw = 340 + ((h.seed >>> 3) % 140), rh = 260 + ((h.seed >>> 11) % 120);   // előjeltelen eltolás; elég nagy a berendezéshez
   player.inHouse = { house: h, type: h.type || 'lakohaz', room: roomFor(h.type || 'lakohaz'), rw, rh, exit: { x: rw / 2, y: rh - 10 }, back: { x: h.door.x, y: h.door.y } };
   player.ix = rw / 2; player.iy = rh - 40;               // a szobában, a kijárat közelében
   player.sitting = null; player.inBed = false;           // belépéskor állva kezdünk
@@ -434,7 +434,7 @@ function onUse() {
     if (best) { takeItem(best.id); player.holding = best.name; return; }
   }
   if (player.riding) { toggleVehicle(); return; }        // járműből kiszállás
-  const h = nearestDoor(player.x, player.y, 40);
+  const h = nearestDoor(player.x, player.y, 52);         // bőkezű belépési táv, hogy könnyű legyen odaállni
   if (h) { enterHouse(h); return; }
   toggleVehicle();                                       // különben jármű be-/felszállás
 }
