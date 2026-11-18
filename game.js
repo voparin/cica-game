@@ -439,6 +439,29 @@ function drawBedroom(ox, oy, rw, rh) {
     drawItem(ox + it.x, oy + it.y, it.name);
   }
 }
+function drawSchool(ox, oy, rw, rh) {
+  const L = schoolLayout(rw, rh);
+  // tábla a terem elején (dísz)
+  const b = L.board; ctx.fillStyle = '#2f5a3a'; ctx.fillRect(ox + b.x - b.w / 2, oy + b.y - b.h / 2, b.w, b.h);
+  ctx.strokeStyle = '#cfe6d2'; ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(ox + b.x - b.w / 2 + 10, oy + b.y - b.h / 2 + i * 6); ctx.lineTo(ox + b.x - b.w / 2 + 10 + i * 20, oy + b.y - b.h / 2 + i * 6); ctx.stroke(); }
+  // padok
+  for (const d of L.desks) {
+    ctx.fillStyle = '#8a6b43'; ctx.fillRect(ox + d.x - d.w / 2, oy + d.y - d.h / 2, d.w, d.h);          // asztallap
+    ctx.fillStyle = '#5a4630'; ctx.fillRect(ox + d.x - d.w / 2, oy + d.y + d.h / 2 - 4, d.w, 4);        // ülőke/él
+  }
+}
+// nyitott könyv (két lap + gerinc), a lapokon az eddig tanult betűk
+const BOOK_LETTERS = ['A', 'O', 'I', 'M', 'E'];
+function drawOpenBook(cx, cy) {
+  ctx.fillStyle = '#6b4a30'; ctx.fillRect(cx - 34, cy - 2, 68, 6);                 // könyvgerinc/alap
+  ctx.fillStyle = '#fbf6e9'; ctx.fillRect(cx - 32, cy - 22, 30, 22); ctx.fillRect(cx + 2, cy - 22, 30, 22);   // két lap
+  ctx.strokeStyle = '#caa'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy - 22); ctx.lineTo(cx, cy); ctx.stroke();   // gerincvonal
+  ctx.fillStyle = '#1b1410'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const left = BOOK_LETTERS.slice(0, 3).join(' '), right = BOOK_LETTERS.slice(3).join(' ');
+  ctx.fillText(left, cx - 17, cy - 11); ctx.fillText(right, cx + 17, cy - 11);
+  ctx.textBaseline = 'alphabetic';
+}
 function drawInterior() {
   const r = player.inHouse;
   ctx.fillStyle = '#2a2320'; ctx.fillRect(0, 0, W, H);
@@ -448,7 +471,8 @@ function drawInterior() {
   ctx.fillStyle = '#4a2f1c'; ctx.fillRect(ox + r.exit.x - 22, oy + r.exit.y - 10, 44, 16);   // ajtólap
   ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('KIJÁRAT (E)', ox + r.exit.x, oy + r.exit.y + 20);
   if (r.room && r.room.furnished) drawBedroom(ox, oy, r.rw, r.rh);          // lakóház: berendezés (felirat nélkül)
-  else if (r.room && r.room.label) {                                        // speciális ház: a típus neve középen
+  else if (r.room && r.room.school) drawSchool(ox, oy, r.rw, r.rh);         // iskolaterem: padok + tábla
+  else if (r.room && r.room.label) {                                        // egyéb speciális ház: a típus neve középen
     ctx.fillStyle = '#e8e2d4'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(r.room.label, ox + r.rw / 2, oy + r.rh / 2);
   }
@@ -457,6 +481,10 @@ function drawInterior() {
     drawPerson(ox + L.bed.x, oy + L.bed.y, 0, player.color, player.name, player.holding);
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Zzz…', W / 2, H / 2);
+  } else if (player.sitting != null && r.room && r.room.school) {
+    const S = schoolLayout(r.rw, r.rh), d = S.desks[player.sitting] || S.desks[0];
+    drawPerson(ox + d.x, oy + d.y - 14, 0, player.color, player.name, player.holding);   // a padnál ülve
+    drawOpenBook(ox + d.x, oy + d.y);                                                     // előtte a nyitott könyv
   } else {
     drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name, player.holding);
   }
@@ -872,7 +900,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
