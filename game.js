@@ -704,7 +704,7 @@ function buildDrawList() {
   for (const o of net.others.values()) {
     const key = depthKey(o.x, o.y);
     if (o.car) {                                         // jármű + a rajta ülő másik játékos
-      list.push({ type: o.kind === 'lo' ? 'horse' : 'car', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', key });
+      list.push({ type: o.kind === 'lo' ? 'horse' : 'car', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', key, moving: true });
       list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, rider: true, hold: o.hold || '' });
     } else {
       list.push({ type: 'person', wx: o.x, wy: o.y, a: o.a, color: o.color || '#d42020', name: o.name, key, hold: o.hold || '', bed: !!o.bed });
@@ -713,7 +713,7 @@ function buildDrawList() {
   const pkey = depthKey(player.x, player.y);
   if (player.riding) {                                   // a saját jármű + rajta mi magunk
     const vt = player.riding.kind === 'lo' ? 'horse' : 'car';
-    list.push({ type: vt, wx: player.x, wy: player.y, a: player.a, color: player.riding.color, key: pkey, self: true });
+    list.push({ type: vt, wx: player.x, wy: player.y, a: player.a, color: player.riding.color, key: pkey, self: true, moving: Math.abs(player.riding.speed || 0) > 5 });
     list.push({ type: 'person', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, rider: true, hold: player.holding });
   } else {
     list.push({ type: 'player', wx: player.x, wy: player.y, a: player.a, color: player.color, name: player.name, key: pkey, self: true, hold: player.holding });
@@ -891,7 +891,7 @@ function drawCity() {
     else if (e.type === 'targy') drawItem(sx, sy, e.name);
     else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking, phase: e.phase, moving: e.moving });
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
-    else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name);
+    else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name, { moving: e.moving });
     else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name, e.hold);   // a járművön ülő: feljebb, hogy kilátszódjon
     else {
       drawPerson(sx, sy, e.a, e.color, e.name, e.hold);
@@ -1006,26 +1006,41 @@ function drawCarSprite(sx, sy, a, color, name) {
   nameTag(sx, sy, name);
 }
 // ló: a talajon álló, menetirányba forgatott test (nem dől); lábak, nyak+fej, farok. ~2×
-function drawHorseSprite(sx, sy, a, color, name) {
-  const LEN = 96, WID = 40;
-  drawShadow(sx, sy, 34, 16);
+// ló (Szilaj-szerű): ívelt nyak, fej orral, lobogó sörény + farok, 4 láb ügetés-animációval
+function drawHorseSprite(sx, sy, a, color, name, flags) {
+  flags = flags || {};
+  const LEN = 104, WID = 40, Z = 36, col = color || '#c08a4a';   // meleg, Szilaj-szerű tónus
+  const mane = '#5a3a1e';                                         // sötét sörény/farok
+  drawShadow(sx, sy, 38, 18);
   const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
-  const Z = 30;                                         // a hát magassága
-  // lábak (a talajtól a hasig, a 4 saroknál)
-  ctx.strokeStyle = shade(color || '#8a5a2b', 0.3); ctx.lineWidth = 5;
-  for (const [lx, ly] of [[LEN * 0.3, -WID / 2], [LEN * 0.3, WID / 2], [-LEN * 0.3, -WID / 2], [-LEN * 0.3, WID / 2]]) {
-    const foot = P(lx, ly, 0), hip = P(lx, ly, Z * 0.7); ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
+  const ph = flags.moving === false ? 0 : (time * 7);            // ügetés-fázis (állóban nincs lépés)
+  const amp = flags.moving === false ? 0 : 1;
+  // 4 láb: átlós párok ellenfázisban (ügetés), a lépéskor előre-hátra leng
+  ctx.strokeStyle = shade(col, 0.35); ctx.lineWidth = 6;
+  const legs = [[LEN * 0.32, -WID / 2, 0], [LEN * 0.32, WID / 2, Math.PI], [-LEN * 0.34, -WID / 2, Math.PI], [-LEN * 0.34, WID / 2, 0]];
+  for (const [lx, ly, pp] of legs) {
+    const swing = Math.sin(ph + pp) * 8 * amp, lift = Math.max(0, Math.sin(ph + pp)) * 5 * amp;
+    const foot = P(lx + swing, ly, lift), hip = P(lx, ly, Z * 0.62);
+    ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
   }
-  // test (felső lap, enyhén megemelve)
-  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], color || '#8a5a2b');
-  fillPoly([P(LEN / 2, WID / 2, Z * 0.7), P(-LEN / 2, WID / 2, Z * 0.7), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(color || '#8a5a2b', 0.25));
-  // nyak + fej (az orrnál, feljebb)
-  const neck = P(LEN / 2, 0, Z), head = P(LEN * 0.66, 0, Z + 16);
-  ctx.strokeStyle = color || '#8a5a2b'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(neck[0], neck[1]); ctx.lineTo(head[0], head[1]); ctx.stroke();
-  ctx.fillStyle = color || '#8a5a2b'; ctx.beginPath(); ctx.ellipse(head[0], head[1], 7, 5, 0, 0, Math.PI * 2); ctx.fill();
-  // farok (hátul)
-  const tail0 = P(-LEN / 2, 0, Z), tail1 = P(-LEN * 0.66, 0, Z * 0.3);
-  ctx.strokeStyle = '#3a2d22'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tail0[0], tail0[1]); ctx.lineTo(tail1[0], tail1[1]); ctx.stroke();
+  // test (izmos törzs: felső lap + oldal)
+  fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], col);
+  fillPoly([P(LEN / 2, WID / 2, Z * 0.55), P(-LEN / 2, WID / 2, Z * 0.55), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(col, 0.22));
+  fillPoly([P(LEN / 2, -WID / 2, Z * 0.55), P(LEN / 2, WID / 2, Z * 0.55), P(LEN / 2, WID / 2, Z), P(LEN / 2, -WID / 2, Z)], shade(col, 0.12));   // mellkas eleje
+  // ívelt nyak (a törzs elejétől felfelé-előre) + fej orral
+  const base = P(LEN * 0.42, 0, Z), withers = P(LEN * 0.5, 0, Z + 18), poll = P(LEN * 0.66, 0, Z + 22), head = P(LEN * 0.78, 0, Z + 14), muzzle = P(LEN * 0.9, 0, Z + 6);
+  ctx.strokeStyle = col; ctx.lineWidth = 13; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(base[0], base[1]); ctx.lineTo(withers[0], withers[1]); ctx.lineTo(poll[0], poll[1]); ctx.stroke();   // ívelt nyak
+  ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(poll[0], poll[1]); ctx.lineTo(head[0], head[1]); ctx.lineTo(muzzle[0], muzzle[1]); ctx.stroke();   // fej + orr
+  ctx.lineCap = 'butt';
+  // fülek
+  ctx.fillStyle = col; const ear = P(LEN * 0.64, 0, Z + 30); ctx.beginPath(); ctx.moveTo(ear[0] - 3, ear[1]); ctx.lineTo(ear[0], ear[1] - 7); ctx.lineTo(ear[0] + 3, ear[1]); ctx.closePath(); ctx.fill();
+  // sörény (a nyak ívén végig, lobog)
+  ctx.strokeStyle = mane; ctx.lineWidth = 4;
+  for (let k = 0; k <= 4; k++) { const u = k / 4, mx = base[0] + (poll[0] - base[0]) * u, my = base[1] + (poll[1] - base[1]) * u; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx - 4, my + 7 + Math.sin(ph + k) * 2 * amp); ctx.stroke(); }
+  // farok (hátul, lobogó)
+  const t0 = P(-LEN / 2, 0, Z), t1 = P(-LEN * 0.74, Math.sin(ph) * 3 * amp, Z * 0.2);
+  ctx.strokeStyle = mane; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(t0[0], t0[1]); ctx.quadraticCurveTo((t0[0] + t1[0]) / 2 - 6, (t0[1] + t1[1]) / 2, t1[0], t1[1]); ctx.stroke(); ctx.lineCap = 'butt';
   nameTag(sx, sy, name);
 }
 // visszafelé kompatibilis: a régi drawPlayer most embert rajzol

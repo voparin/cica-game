@@ -582,6 +582,9 @@ check('a hibás / ismeretlen üzenetet csendben kihagyja', true);
 // --- Szereplő-sprite-ok ---
 check('a sprite-rajzolók léteznek', typeof G.drawPerson === 'function' && typeof G.drawCarSprite === 'function' && typeof G.drawHorseSprite === 'function');
 check('egy sprite rajzolása nem dob hibát (kamu ctx)', (() => { try { G.drawPerson(100, 100, 0, '#fff', 'A'); G.drawCarSprite(100, 100, 1, '#f00'); G.drawHorseSprite(100, 100, 2, '#8a5a2b'); return true; } catch (e) { return false; } })());
+check('drawHorseSprite a mozgás-jelzővel (flags) sem dob hibát több irányban', (() => {
+  try { for (const a of [0, 1.6, 3.14, -1.6]) { G.drawHorseSprite(100, 100, a, '#8a5a2b', 'Ló', { moving: true }); G.drawHorseSprite(100, 100, a, '#8a5a2b', 'Ló', { moving: false }); } return true; } catch (e) { return false; }
+})());
 check('a kézben tartott tárgy rajza nem dob hibát', (() => { try { G.drawPerson(100, 100, 0, '#fff', 'A', 'maci'); return true; } catch (e) { return false; } })());
 check('vehicleQuad a talajon fekvő téglalapot ad (szemközti oldalak egyenlők)', (() => {
   const q = G.vehicleQuad(0, 0, 0, 120, 60);        // 4 világ-sarok: [elöl-bal, elöl-jobb, hátul-jobb, hátul-bal]
