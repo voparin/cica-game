@@ -503,7 +503,7 @@ function schoolLayout(rw, rh) {
   const cols = 3, rows = 2, desks = [];
   const x0 = 70, y0 = 90, dx = (rw - 140) / (cols - 1), dy = 54;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) desks.push({ x: x0 + c * dx, y: y0 + r * dy, w: 46, h: 26 });
-  return { desks, board: { x: rw / 2, y: 34, w: Math.min(220, rw - 80), h: 26 }, exit: { x: rw / 2, y: rh - 10 } };
+  return { desks, board: { x: rw / 2, y: 44, w: Math.min(240, rw - 70), h: 58 }, exit: { x: rw / 2, y: rh - 10 } };
 }
 // az étterem elrendezése EGY forrásból (rajz + interakció): asztalok rácsban, kijárat
 function restaurantLayout(rw, rh) {
@@ -557,10 +557,15 @@ function drawBedroom(ox, oy, rw, rh) {
 }
 function drawSchool(ox, oy, rw, rh) {
   const L = schoolLayout(rw, rh);
-  // tábla a terem elején (dísz)
+  // tábla a terem elején + matek példák
   const b = L.board; ctx.fillStyle = '#2f5a3a'; ctx.fillRect(ox + b.x - b.w / 2, oy + b.y - b.h / 2, b.w, b.h);
-  ctx.strokeStyle = '#cfe6d2'; ctx.lineWidth = 1;
-  for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(ox + b.x - b.w / 2 + 10, oy + b.y - b.h / 2 + i * 6); ctx.lineTo(ox + b.x - b.w / 2 + 10 + i * 20, oy + b.y - b.h / 2 + i * 6); ctx.stroke(); }
+  const probs = (player.inHouse && player.inHouse.room && player.inHouse.room.school) ? (player.schoolMath || []) : [];
+  ctx.fillStyle = '#eefbea'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  probs.forEach((p, i) => {
+    const txt = `${p.a} ${p.op} ${p.b} = ${p.done ? p.answer : ''}`;
+    ctx.fillText(txt, ox + b.x - b.w / 2 + 10, oy + b.y - b.h / 2 + 10 + i * 13);
+  });
+  ctx.textBaseline = 'alphabetic';
   // padok
   for (const d of L.desks) {
     ctx.fillStyle = '#8a6b43'; ctx.fillRect(ox + d.x - d.w / 2, oy + d.y - d.h / 2, d.w, d.h);          // asztallap
@@ -690,7 +695,7 @@ function drawInterior() {
   } else if (player.sitting != null && r.room && r.room.school) {
     const S = schoolLayout(r.rw, r.rh), d = S.desks[player.sitting] || S.desks[0];
     drawPerson(ox + d.x, oy + d.y - 14, 0, player.color, player.name, player.holding);   // a padnál ülve
-    drawOpenBook(ox + d.x, oy + d.y);                                                     // előtte a nyitott könyv
+    drawOpenBook(ox + d.x, oy + d.y, player.schoolWord);                                  // előtte a nyitott könyv (a mai szó)
   } else if (player.sitting != null && r.room && r.room.dining) {
     const T = restaurantLayout(r.rw, r.rh), t = T.tables[player.sitting] || T.tables[0];
     drawPerson(ox + t.x, oy + t.y - 14, 0, player.color, player.name, player.holding);   // az asztalnál ülve
@@ -704,7 +709,8 @@ function drawInterior() {
     drawPerson(ox + player.ix, oy + player.iy, 0, player.color, player.name, player.holding);
   }
   ctx.fillStyle = '#fff'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('E: kijárat', 12, 24);
+  const hint = (r.room && r.room.school) ? 'E: pad (szó) / tábla (matek) / kijárat' : 'E: kijárat';
+  ctx.fillText(hint, 12, 24);
 }
 
 // ===== Rajzolás =====
