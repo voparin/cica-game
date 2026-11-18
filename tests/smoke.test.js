@@ -326,6 +326,21 @@ check('restaurantLayout 3-4 asztalt és kijáratot ad, mind a szobán belül', (
   const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
   return Array.isArray(L.tables) && L.tables.length >= 3 && L.tables.length <= 4 && L.tables.every(inside) && L.exit && inside(L.exit);
 })());
+check('roomFor a boltot shop, az irodát és a gyárat work jelzővel adja', (() => {
+  const b = G.roomFor('bolt'), ir = G.roomFor('iroda'), gy = G.roomFor('gyar');
+  return b.shop === true && b.furnished === false && ir.work === 'iroda' && gy.work === 'gyar';
+})());
+check('shopLayout polcokat és a megadott árut adja (répa, 3 paradicsom, 3 virsli, 2 uborka)', (() => {
+  const L = G.shopLayout(360, 260);
+  const inside = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
+  const count = n => L.goods.filter(g => g.name === n).length;
+  return Array.isArray(L.goods) && L.goods.every(inside) && count('repa') >= 1 && count('paradicsom') === 3 && count('virsli') === 3 && count('uborka') === 2 && L.exit && inside(L.exit);
+})());
+check('workLayout (iroda/gyár) 2-4 asztalt és kijáratot ad, a szobán belül', (() => {
+  const inside360 = z => z.x >= 0 && z.y >= 0 && z.x <= 360 && z.y <= 260;
+  const a = G.workLayout(360, 260);
+  return Array.isArray(a.tables) && a.tables.length >= 2 && a.tables.length <= 4 && a.tables.every(inside360) && a.exit && inside360(a.exit);
+})());
 check('belépéskor a szoba megkapja a ház típusát', (() => {
   G.player.riding = null; G.player.inHouse = null;
   const h = G.housesIn(0, 0, 3000)[0];

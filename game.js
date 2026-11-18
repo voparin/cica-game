@@ -333,6 +333,9 @@ function roomFor(type) {
   if (type === 'lakohaz') return { furnished: true, label: '' };
   if (type === 'iskola') return { furnished: false, label: 'Iskola', school: true };
   if (type === 'etterem') return { furnished: false, label: 'Étterem', dining: true };
+  if (type === 'bolt') return { furnished: false, label: 'Bolt', shop: true };
+  if (type === 'iroda') return { furnished: false, label: 'Iroda', work: 'iroda' };
+  if (type === 'gyar') return { furnished: false, label: 'Gyár', work: 'gyar' };
   return { furnished: false, label: TYPE_LABEL[type] || 'Ház' };
 }
 // belső szoba a ház seedjéből: méret determinisztikus, a kijárat az alsó fal közepén
@@ -436,6 +439,21 @@ function restaurantLayout(rw, rh) {
   const tables = [];
   const y0 = 80, dyr = 80, perRow = 2, x0 = rw * 0.3, dxc = rw * 0.4;
   for (let i = 0; i < 4; i++) { const r = Math.floor(i / perRow), c = i % perRow; tables.push({ x: x0 + c * dxc, y: y0 + r * dyr, w: 56, h: 34 }); }
+  return { tables, exit: { x: rw / 2, y: rh - 10 } };
+}
+// a bolt elrendezése: két polc + az áru a polcokon (répa, 3 paradicsom, 3 virsli, 2 uborka)
+function shopLayout(rw, rh) {
+  const shelves = [{ x: rw / 2, y: 60, w: rw - 120, h: 18 }, { x: rw / 2, y: 120, w: rw - 120, h: 18 }];
+  const goods = [];
+  const row = (names, sy) => { const n = names.length, x0 = rw / 2 - (n - 1) * 15; names.forEach((nm, i) => goods.push({ name: nm, x: x0 + i * 30, y: sy })); };
+  row(['repa', 'repa', 'paradicsom', 'paradicsom', 'paradicsom'], 54);      // felső polc: répa + paradicsom
+  row(['virsli', 'virsli', 'virsli', 'uborka', 'uborka'], 114);             // alsó polc: virsli + uborka
+  return { shelves, goods, exit: { x: rw / 2, y: rh - 10 } };
+}
+// munkahely (iroda/gyár) elrendezése: asztalok + székek, leülhető
+function workLayout(rw, rh) {
+  const tables = [];
+  for (let i = 0; i < 3; i++) tables.push({ x: rw * 0.3 + (i % 2) * rw * 0.4, y: 90 + Math.floor(i / 2) * 80, w: 56, h: 34 });
   return { tables, exit: { x: rw / 2, y: rh - 10 } };
 }
 // egy tárgy kis ikonja (a szobában és a kézben is ezt használjuk)
@@ -979,7 +997,7 @@ if (typeof global !== 'undefined') {
     updateVehiclePhysics, VEH,
     toggleVehicle, updateDriving, onUse, ENTER_RANGE,
     enterHouse, leaveHouse, nearestDoor, updateInterior, drawInterior,
-    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal,
+    roomFor, TYPE_LABEL, drawBedroom, bedroomLayout, drawItem, schoolLayout, drawSchool, drawOpenBook, BOOK_LETTERS, restaurantLayout, drawRestaurant, drawMeal, shopLayout, workLayout,
     iso, worldToScreen, ISO_X, ISO_Y, screenToWorldDir, vehicleQuad,
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
