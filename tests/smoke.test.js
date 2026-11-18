@@ -276,6 +276,14 @@ check('a kutya időnként megáll (moving=false) és a póz ad lépésfázist (p
   const sample = G.animalPose(dog, 1);
   return paused > 0 && typeof sample.phase === 'number';
 })());
+check('a kutya időnként a fához megy és pisil (peeing=true, a fánál)', (() => {
+  const dog = { kind: 'kutya', hx: 0, hy: 0, seed: 321, tree: { x: 40, y: 10 } };
+  let pee = 0, atTree = true;
+  for (let t = 0; t < 80; t += 0.25) { const p = G.animalPose(dog, t); if (p.peeing) { pee++; if (Math.hypot(p.x - 40, p.y - 10) > 18) atTree = false; } }
+  const noTree = { kind: 'kutya', hx: 0, hy: 0, seed: 321, tree: null };
+  let peeNoTree = 0; for (let t = 0; t < 80; t += 0.25) if (G.animalPose(noTree, t).peeing) peeNoTree++;
+  return pee > 0 && atTree && peeNoTree === 0;            // fa nélkül nincs pisilés
+})());
 check('két közeli kutya ugat (barking), és a küszöb (BARK_RANGE) létezik', (() => {
   if (typeof G.BARK_RANGE !== 'number' || G.BARK_RANGE <= 0) return false;
   const dogs = G.animalsIn(0, 0, 6000).filter(g => g.an.kind === 'kutya');

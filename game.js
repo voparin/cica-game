@@ -210,9 +210,8 @@ function animalFor(h) {
   const kind = (h.seed >>> 20) % 2 ? 'kutya' : 'macska';
   const color = kind === 'kutya' ? DOG_COLORS[(h.seed >>> 22) % DOG_COLORS.length] : CAT_COLORS[(h.seed >>> 22) % CAT_COLORS.length];
   const hx = h.x + h.w / 2 + 26, hy = h.y;
-  let tree = null;
-  if (kind === 'macska') {                               // a macskához a legközelebbi fa (fára mászáshoz)
-    let best = null, bd = 220;
+  let tree = null;                                       // a legközelebbi fa (macska: felmászik; kutya: odapisil)
+  { let best = null, bd = 220;
     for (const tr of treesIn(hx, hy, 260)) { const d = Math.hypot(tr.x - hx, tr.y - hy); if (d < bd) { bd = d; best = tr; } }
     tree = best ? { x: best.x, y: best.y } : null;
   }
@@ -257,12 +256,22 @@ function animalPose(an, t) {
   // a ház a kezdőponttól balra van; tartsuk a háztól jobbra (sima, egyoldali korlát – nincs átugrás)
   if (an.house) { const edge = an.house.x + an.house.w / 2 + 8; if (x < edge) x = edge; }
   // a macska időnként felmászik a legközelebbi fára (determinisztikus ciklus a seedből + időből)
-  let onTree = false;
+  let onTree = false, peeing = false;
   if (an.kind === 'macska' && an.tree) {
     const cyc = (t * 0.12 + (an.seed % 100) / 100) % 1;    // ~8 mp-es ciklus, seedből eltolva
     if (cyc > 0.55 && cyc < 0.8) { onTree = true; x = an.tree.x; y = an.tree.y; a = 0; moving = false; }
   }
-  return { x, y, a, onTree, moving, phase };
+  // a kutya időnként a fához megy és lepisili (determinisztikus ciklus)
+  if (an.kind === 'kutya' && an.tree) {
+    const cyc = (t * 0.1 + (an.seed % 100) / 100) % 1;     // ~10 mp-es ciklus
+    const px = an.tree.x - 14, py = an.tree.y + 6;         // a fa törzse mellé állna
+    const inHouse = an.house && Math.abs(px - an.house.x) < an.house.w / 2 + 6 && Math.abs(py - an.house.y) < an.house.h / 2 + 6;
+    if (cyc > 0.6 && cyc < 0.78 && !inHouse) {             // csak ha a pisilő hely a házon kívül van
+      peeing = true; moving = false; x = px; y = py;
+      a = Math.atan2(an.tree.y - y, an.tree.x - x);        // a fa felé fordul
+    }
+  }
+  return { x, y, a, onTree, peeing, moving, phase };
 }
 // egy kutya-szakasz kezdőpontja: az utóbbi néhány szakasz elmozdulásának összege a ház körül
 // (a ház-körüli korlát miatt a régebbi szakaszok hatása elhanyagolható, ezért legfeljebb 8-at nézünk – korlátos költség)
@@ -278,7 +287,7 @@ function segStart(an, seg) {
 }
 function animalsIn(cx, cy, radius) {                     // a közeli házak állatai (a mostani pózukban)
   const out = [];
-  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree, moving: p.moving, phase: p.phase, barking: false }); }
+  for (const h of housesIn(cx, cy, radius)) { const an = animalFor(h); const p = animalPose(an, time); out.push({ an, x: p.x, y: p.y, a: p.a, onTree: p.onTree, peeing: p.peeing, moving: p.moving, phase: p.phase, barking: false }); }
   for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {   // két közeli kutya egymásra ugat
     if (out[i].an.kind === 'kutya' && out[j].an.kind === 'kutya' && Math.hypot(out[i].x - out[j].x, out[i].y - out[j].y) < BARK_RANGE) {
       out[i].barking = out[j].barking = true;
@@ -906,7 +915,7 @@ function drawCity() {
     const [sx, sy] = worldToScreen(e.wx, e.wy);
     if (e.type === 'fa') drawTree(sx, sy, e.big);
     else if (e.type === 'targy') drawItem(sx, sy, e.name);
-    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, barking: e.barking, phase: e.phase, moving: e.moving });
+    else if (e.type === 'allat') drawAnimal(sx, sy, e.a, e.kind, e.color, { onTree: e.onTree, peeing: e.peeing, barking: e.barking, phase: e.phase, moving: e.moving });
     else if (e.type === 'car') drawCarSprite(sx, sy, e.a, e.color, e.name);
     else if (e.type === 'horse') drawHorseSprite(sx, sy, e.a, e.color, e.name, { moving: e.moving });
     else if (e.rider) drawPerson(sx, sy - 14, e.a, e.color, e.name, e.hold);   // a járművön ülő: feljebb, hogy kilátszódjon
@@ -976,14 +985,20 @@ function drawDog(sx, sy, a, color, flags) {
   drawShadow(sx, sy, 24, 11);
   const P = (lx, ly, lz) => vehPt(sx, sy, a, lx, ly, lz);
   const ph = flags.phase || 0, amp = flags.moving === false ? 0 : 1;   // állóban nem lép
-  // 4 láb: átlós párok ellenfázisban (ügetés), a lépéskor előre-hátra leng
+  const pee = !!flags.peeing;
+  // 4 láb: átlós párok ellenfázisban (ügetés); pisiléskor az egyik hátsó láb kiemelve
   const legs = [[LEN * 0.3, -WID / 2, 0], [LEN * 0.3, WID / 2, Math.PI], [-LEN * 0.3, -WID / 2, Math.PI], [-LEN * 0.3, WID / 2, 0]];
   ctx.strokeStyle = shade(col, 0.3); ctx.lineWidth = 4;
-  for (const [lx, ly, pp] of legs) {
+  legs.forEach(([lx, ly, pp], i) => {
+    if (pee && i === 2) {                                 // hátsó-bal láb felemelve (pisiló póz)
+      const hip = P(lx, ly, Z * 0.6), knee = P(lx, ly - 10, Z * 0.9);
+      ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(knee[0], knee[1]); ctx.stroke();
+      return;
+    }
     const swing = Math.sin(ph + pp) * 6 * amp;                              // a láb előre-hátra leng
     const foot = P(lx + swing, ly, 0), hip = P(lx, ly, Z * 0.6);
     ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(hip[0], hip[1]); ctx.stroke();
-  }
+  });
   // test (felső lap, enyhén megemelve)
   fillPoly([P(LEN / 2, -WID / 2, Z), P(LEN / 2, WID / 2, Z), P(-LEN / 2, WID / 2, Z), P(-LEN / 2, -WID / 2, Z)], col);
   fillPoly([P(LEN / 2, WID / 2, Z * 0.6), P(-LEN / 2, WID / 2, Z * 0.6), P(-LEN / 2, WID / 2, Z), P(LEN / 2, WID / 2, Z)], shade(col, 0.22));   // oldal
@@ -999,6 +1014,11 @@ function drawDog(sx, sy, a, color, flags) {
   const wag = Math.sin(ph * 1.5) * 4 * amp;
   const t0 = P(-LEN / 2, 0, Z), t1 = P(-LEN * 0.72, wag, Z + 10);
   ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(t0[0], t0[1]); ctx.lineTo(t1[0], t1[1]); ctx.stroke();
+  if (pee) {                                             // kis pisi-csík és tócsa a hátsó-bal láb felől
+    const from = P(-LEN * 0.3, -WID / 2 - 6, Z * 0.5), to = P(-LEN * 0.3, -WID / 2 - 14, 0);
+    ctx.strokeStyle = '#e9d36b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(from[0], from[1]); ctx.lineTo(to[0], to[1]); ctx.stroke();
+    ctx.fillStyle = 'rgba(214,194,90,0.6)'; ctx.beginPath(); ctx.ellipse(to[0], to[1], 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+  }
   if (flags.barking) {                                   // „Vau!" buborék
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(sx + 18, sy - 24, 16, 10, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#1b1410'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
