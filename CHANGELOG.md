@@ -2,6 +2,19 @@
 
 A verziószám jelentése: nagy.közepes.kicsi (SemVer-szerűen).
 
+## 0.12.4 – 2026-11-18
+
+- Javítás: a belső szoba mérete néha hibásan nagyon kicsi lett (a seed ELŐJELES
+  eltolása miatt), ezért a berendezés (pl. az étterem alsó asztalai) kilógott a
+  szobából. Most előjeltelen eltolás + elég nagy szoba – semmi sem lóg ki.
+- Az ajtóhoz érve bőkezűbb a belépési táv (könnyebb odaállni és E-vel belépni).
+
+## 0.12.3 – 2026-11-18
+
+- Rendes macska-forma (fej, hegyes fülek, cirmos csíkok, felcsapott lengő farok)
+  láb-animációval; változatos szín (cirmos, fekete, fehér, barna, szürke) a
+  szürke „kaki" kinézet helyett.
+
 ## 0.12.2 – 2026-11-18
 
 - Az ajtó mostantól MINDIG a kamera felőli (elülső) falon van: így minden ház
