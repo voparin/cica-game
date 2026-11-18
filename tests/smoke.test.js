@@ -574,6 +574,11 @@ check('streetStyle determinisztikus és 0..2 közötti', (() => { const a = G.st
 check('a drawHouse és drawStreets léteznek és nem dobnak', (() => {
   try { const h = G.housesIn(0, 0, 2400)[0]; G.drawHouse(h); G.drawStreets(); return true; } catch (e) { return false; }
 })());
+check('drawHomeDetails (kémény + kertkapu) létezik és a lakóházra nem dob hibát', (() => {
+  if (typeof G.drawHomeDetails !== 'function') return false;
+  const lak = G.housesIn(0, 0, 6000).find(h => h.type === 'lakohaz');
+  try { G.drawHouse(lak); return true; } catch (e) { return false; }
+})());
 
 // egy képkocka lerajzolása nem dob hibát (kamu ctx)
 let drewOk = true;

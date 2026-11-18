@@ -765,6 +765,19 @@ function doorQuad(h, side) {
   const x = h.x - hw; return [[x, h.y - d, 0], [x, h.y + d, 0], [x, h.y + d, Z], [x, h.y - d, Z]];   // nx
 }
 
+// a lakóház otthonos jegyei: kémény a tetőn + kis kertkapu az ajtó előtt
+function drawHomeDetails(h) {
+  const hw = h.w / 2, hh = h.h / 2, z = h.height;
+  // kémény a tető hátsó sarka közelében (kis füsttel)
+  const [kx, ky] = worldToScreen(h.x + hw * 0.5, h.y - hh * 0.5, z + 12);
+  ctx.fillStyle = '#6b4a30'; ctx.fillRect(kx - 3, ky - 10, 6, 14);
+  ctx.fillStyle = 'rgba(210,210,210,0.7)'; ctx.beginPath(); ctx.arc(kx, ky - 14, 4, 0, Math.PI * 2); ctx.fill();
+  // kis kertkapu az ajtó (h.door) előtt
+  const [gx, gy] = worldToScreen(h.door.x, h.door.y, 0);
+  ctx.strokeStyle = '#caa36f'; ctx.lineWidth = 2;
+  ctx.strokeRect(gx - 12, gy - 6, 24, 10);                                   // kerítés-keret
+  ctx.beginPath(); for (let i = -8; i <= 8; i += 4) { ctx.moveTo(gx + i, gy - 6); ctx.lineTo(gx + i, gy + 4); } ctx.stroke();   // léckerítés
+}
 function drawHouse(h) {
   const hw = h.w / 2, hh = h.h / 2, z = h.height;
   const poly = (pts, fill, line) => { fillIsoPoly(pts, fill); if (line) { ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.stroke(); } };
@@ -796,6 +809,7 @@ function drawHouse(h) {
     const sh = shade(h.roof, 0.3);                      // cserépsorok az elülső lapon
     for (let k = 1; k <= 3; k++) { const yy = h.y + (hh) * k / 4, zz = pk - (pk - z) * k / 4; wline([h.x - hw, yy, zz], [h.x + hw, yy, zz], sh); }
   }
+  if (h.type === 'lakohaz') drawHomeDetails(h);          // otthonos jegyek: kémény + kertkapu
   // NAGY ajtó a valódi bejárat (h.door) oldalán
   const side = doorSide(h);
   if (side === 'py' || side === 'px') {                 // látható (elülső) falon: a fal síkjában fekvő ajtó
@@ -1082,7 +1096,7 @@ if (typeof global !== 'undefined') {
     depthKey, buildDrawList,
     drawPerson, drawCarSprite, drawHorseSprite, drawShadow,
     drawTree, drawAnimal,
-    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad, drawHouseIcon,
+    streetStyle, drawStreets, drawHouse, fillIsoPoly, visibleWalls, doorSide, doorQuad, drawHouseIcon, drawHomeDetails,
     drawCity,
     get W() { return W; }, get H() { return H; } };
 }
